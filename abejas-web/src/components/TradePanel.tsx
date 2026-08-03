@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { CardJSON, PlayerJSON, TradeOfferJSON } from "../types";
+import type { CardJSON, PlayerJSON, RequestedCardsJSON, TradeOfferJSON } from "../types";
 import { ALL_CARD_TYPE_IDS, cardTypeName } from "../cardDisplay";
 import CardBadge from "./CardBadge";
 import HandView from "./HandView";
@@ -26,8 +26,9 @@ export default function TradePanel({
   send,
 }: Props) {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [requestedTypeId, setRequestedTypeId] = useState(ALL_CARD_TYPE_IDS[0]!);
-  const [requestedCount, setRequestedCount] = useState(1);
+  const [requestedCards, setRequestedCards] = useState<RequestedCardsJSON[]>([]);
+  const [draftTypeId, setDraftTypeId] = useState(ALL_CARD_TYPE_IDS[0]!);
+  const [draftCount, setDraftCount] = useState(1);
 
   const offerableCards = [...(me.hand ?? []), ...drawnCards];
 
@@ -35,15 +36,27 @@ export default function TradePanel({
     setSelectedIds((prev) => (prev.includes(cardId) ? prev.filter((id) => id !== cardId) : [...prev, cardId]));
   }
 
+  function addRequestedType() {
+    if (draftCount < 1) return;
+    setRequestedCards((prev) => {
+      const withoutType = prev.filter((r) => r.typeId !== draftTypeId);
+      return [...withoutType, { typeId: draftTypeId, count: draftCount }];
+    });
+  }
+
+  function removeRequestedType(typeId: string) {
+    setRequestedCards((prev) => prev.filter((r) => r.typeId !== typeId));
+  }
+
   function proposeTrade(e: React.FormEvent) {
     e.preventDefault();
-    if (selectedIds.length === 0 || requestedCount < 1) return;
+    if (selectedIds.length === 0 || requestedCards.length === 0) return;
     send(proposeMessageType, {
       offeredCardIds: selectedIds,
-      requestedTypeId,
-      requestedCount,
+      requestedCards,
     });
     setSelectedIds([]);
+    setRequestedCards([]);
   }
 
   function playerName(playerId: string): string {
@@ -76,10 +89,11 @@ export default function TradePanel({
           <p className="muted">Elige las cartas que ofreces:</p>
           <HandView hand={offerableCards} selectable selectedIds={selectedIds} onToggleSelect={toggleSelect} />
 
+          <p className="muted">A cambio de (se pueden pedir varios tipos distintos):</p>
           <div className="propose-trade-row">
             <label>
-              A cambio de
-              <select value={requestedTypeId} onChange={(e) => setRequestedTypeId(e.target.value)}>
+              Tipo
+              <select value={draftTypeId} onChange={(e) => setDraftTypeId(e.target.value)}>
                 {ALL_CARD_TYPE_IDS.map((id) => (
                   <option key={id} value={id}>
                     {cardTypeName(id)}
@@ -93,14 +107,31 @@ export default function TradePanel({
                 type="number"
                 min={1}
                 max={12}
-                value={requestedCount}
-                onChange={(e) => setRequestedCount(Number(e.target.value))}
+                value={draftCount}
+                onChange={(e) => setDraftCount(Number(e.target.value))}
               />
             </label>
-            <button type="submit" disabled={selectedIds.length === 0}>
-              Proponer trueque
+            <button type="button" onClick={addRequestedType}>
+              Agregar
             </button>
           </div>
+
+          {requestedCards.length > 0 && (
+            <ul className="requested-cards-list">
+              {requestedCards.map((r) => (
+                <li key={r.typeId}>
+                  {r.count}× {cardTypeName(r.typeId)}{" "}
+                  <button type="button" onClick={() => removeRequestedType(r.typeId)}>
+                    Quitar
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <button type="submit" disabled={selectedIds.length === 0 || requestedCards.length === 0}>
+            Proponer trueque
+          </button>
         </form>
       )}
 
@@ -110,13 +141,17 @@ export default function TradePanel({
         <ul>
           {pendingOffers.map((offer) => {
             const isMine = offer.fromPlayerId === me.playerId;
-            const iHaveEnough = (myHandCountByType.get(offer.requestedTypeId) ?? 0) >= offer.requestedCount;
+            const iHaveEnough = offer.requestedCards.every(
+              (r) => (myHandCountByType.get(r.typeId) ?? 0) >= r.count,
+            );
+            const requestedLabel = offer.requestedCards
+              .map((r) => `${r.count}× ${cardTypeName(r.typeId)}`)
+              .join(", ");
             return (
               <li key={offer.id} className="trade-offer">
                 <span>
                   <strong>{playerName(offer.fromPlayerId)}</strong> ofrece{" "}
-                  {offer.offeredCards.map((c) => cardTypeName(c.typeId)).join(", ")} a cambio de{" "}
-                  {offer.requestedCount}× {cardTypeName(offer.requestedTypeId)}
+                  {offer.offeredCards.map((c) => cardTypeName(c.typeId)).join(", ")} a cambio de {requestedLabel}
                 </span>
                 {isMine ? (
                   <button type="button" onClick={() => send("cancelTrade", { offerId: offer.id })}>

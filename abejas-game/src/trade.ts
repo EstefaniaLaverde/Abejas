@@ -1,4 +1,4 @@
-import type { GameState, OfferedCard, TradeOffer } from "./types.js";
+import type { GameState, OfferedCard, RequestedCards, TradeOffer } from "./types.js";
 import { GameError } from "./errors.js";
 import {
   assertIsCurrentPlayer,
@@ -26,9 +26,10 @@ export function drawTradeCards(state: GameState, playerId: string): void {
   assertIsCurrentPlayer(state, playerId);
   assertPhase(state, "trueque");
   const player = getPlayer(state, playerId);
-  if (state.pendingTradeDraw.length > 0) {
+  if (state.tradeDrawnThisTurn) {
     throw new GameError(`${player.id} ya robó las cartas de trueque este turno.`);
   }
+  state.tradeDrawnThisTurn = true;
   const { cards, exhausted } = drawCardsWithRoundTransition(state, 2);
   state.pendingTradeDraw.push(...cards);
   if (cards.length > 0) {
@@ -58,26 +59,42 @@ export function plantDrawnCard(
   log(state, `${player.name} planta directamente ${card!.typeId} (carta robada) en la parcela ${targetPlotIndex}.`);
 }
 
+export function validateRequestedCards(requestedCards: RequestedCards[]): void {
+  if (requestedCards.length === 0) {
+    throw new GameError("Debe pedirse al menos un tipo de cultivo.");
+  }
+  for (const { typeId, count } of requestedCards) {
+    if (!typeId) {
+      throw new GameError("Debe indicarse el tipo de cultivo pedido.");
+    }
+    if (count <= 0) {
+      throw new GameError("La cantidad pedida debe ser mayor a cero.");
+    }
+  }
+}
+
+export function describeRequestedCards(requestedCards: RequestedCards[]): string {
+  return requestedCards.map((r) => `${r.count}x ${r.typeId}`).join(", ");
+}
+
 /**
  * El jugador en turno propone un trueque abierto: ofrece cartas (de su mano
- * y/o de las que acaba de robar) a cambio de `requestedCount` cartas de
- * `requestedTypeId`. Cualquier otro jugador con esas cartas puede aceptarla.
+ * y/o de las que acaba de robar) a cambio de `requestedCards`, que puede
+ * incluir varios tipos de cultivo distintos. Cualquier otro jugador que
+ * tenga todas las cartas pedidas puede aceptarla.
  */
 export function proposeTrade(
   state: GameState,
   fromPlayerId: string,
   offeredCardIds: string[],
-  requestedTypeId: string,
-  requestedCount: number,
+  requestedCards: RequestedCards[],
 ): TradeOffer {
   assertIsCurrentPlayer(state, fromPlayerId);
   assertPhase(state, "trueque");
   if (offeredCardIds.length === 0) {
     throw new GameError("Debe ofrecerse al menos una carta.");
   }
-  if (requestedCount <= 0) {
-    throw new GameError("La cantidad pedida debe ser mayor a cero.");
-  }
+  validateRequestedCards(requestedCards);
   const player = getPlayer(state, fromPlayerId);
 
   const offeredCards: OfferedCard[] = offeredCardIds.map((cardId) => {
@@ -94,14 +111,13 @@ export function proposeTrade(
     id: nextOfferId(),
     fromPlayerId,
     offeredCards,
-    requestedTypeId,
-    requestedCount,
+    requestedCards,
     status: "pendiente",
   };
   state.tradeOffers.push(offer);
   log(
     state,
-    `${player.name} ofrece ${offeredCards.map((o) => o.card.typeId).join(", ")} a cambio de ${requestedCount}x ${requestedTypeId}.`,
+    `${player.name} ofrece ${offeredCards.map((o) => o.card.typeId).join(", ")} a cambio de ${describeRequestedCards(requestedCards)}.`,
   );
   return offer;
 }
@@ -137,10 +153,10 @@ export function cancelTrade(state: GameState, offerId: string, playerId: string)
 /** Un jugador rechaza (deja pasar) una oferta sin aceptarla; no cierra la oferta por sí sola. */
 
 /**
- * Un jugador distinto al proponente acepta la oferta: entrega
- * `requestedCount` cartas de `requestedTypeId` de su mano y recibe las
- * cartas ofrecidas. Ambas partes quedan con la obligación de sembrar lo que
- * recibieron.
+ * Un jugador distinto al proponente acepta la oferta: entrega las cartas
+ * pedidas en `requestedCards` (pudiendo ser de varios tipos distintos) de su
+ * mano y recibe las cartas ofrecidas. Ambas partes quedan con la obligación
+ * de sembrar lo que recibieron.
  */
 export function acceptTrade(
   state: GameState,
@@ -158,14 +174,16 @@ export function acceptTrade(
   const acceptor = getPlayer(state, acceptingPlayerId);
   const offeror = getPlayer(state, offer.fromPlayerId);
 
-  const matchingCards = acceptor.hand.filter((c) => c.typeId === offer.requestedTypeId);
-  if (matchingCards.length < offer.requestedCount) {
-    throw new GameError(
-      `${acceptor.id} no tiene ${offer.requestedCount}x ${offer.requestedTypeId} en mano.`,
+  const givenCards: OfferedCard["card"][] = [];
+  for (const { typeId, count } of offer.requestedCards) {
+    const matchingCards = acceptor.hand.filter(
+      (c) => c.typeId === typeId && !givenCards.includes(c),
     );
+    if (matchingCards.length < count) {
+      throw new GameError(`${acceptor.id} no tiene ${count}x ${typeId} en mano.`);
+    }
+    givenCards.push(...matchingCards.slice(0, count));
   }
-
-  const givenCards = matchingCards.slice(0, offer.requestedCount);
   for (const card of givenCards) {
     removeFromHand(acceptor, card.id);
   }
@@ -181,7 +199,7 @@ export function acceptTrade(
 
   log(
     state,
-    `${acceptor.name} acepta el trueque de ${offeror.name}: entrega ${givenCards.length}x ${offer.requestedTypeId}, recibe ${offer.offeredCards.map((o) => o.card.typeId).join(", ")}.`,
+    `${acceptor.name} acepta el trueque de ${offeror.name}: entrega ${describeRequestedCards(offer.requestedCards)}, recibe ${offer.offeredCards.map((o) => o.card.typeId).join(", ")}.`,
   );
 }
 
@@ -203,7 +221,10 @@ export function plantMandatoryTradeCard(
     throw new GameError(`${playerId} no tiene la carta ${cardId} pendiente de siembra obligatoria.`);
   }
   const [pending] = state.pendingMandatoryPlants.splice(index, 1);
-  plantCard(state, player, pending!.card, targetPlotIndex);
+  // `force = true`: al ser una siembra forzada por el trueque, el jugador
+  // puede elegir descartar cualquiera de sus 3 parcelas, aunque tenga una
+  // vacía o con el mismo cultivo disponible.
+  plantCard(state, player, pending!.card, targetPlotIndex, true);
   log(state, `${player.name} siembra ${pending!.card.typeId} (recibida por trueque) en la parcela ${targetPlotIndex}.`);
 }
 

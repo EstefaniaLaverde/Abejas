@@ -76,6 +76,7 @@ export function createInitialGameState(
     deckRound: "principal",
     awaitingOptionalSow: false,
     pendingTradeDraw: [],
+    tradeDrawnThisTurn: false,
     tradeOffers: [],
     pendingMandatoryPlants: [],
     finalTradeRoundDone: false,

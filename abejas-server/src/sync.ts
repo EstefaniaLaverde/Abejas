@@ -1,10 +1,19 @@
-import type { Card, GameState, Player, Plot, TradeOffer, PendingMandatoryPlant } from "@abejas/game";
+import type {
+  Card,
+  GameState,
+  Player,
+  Plot,
+  RequestedCards,
+  TradeOffer,
+  PendingMandatoryPlant,
+} from "@abejas/game";
 import { ArraySchema, Schema } from "@colyseus/schema";
 import { AbejasState } from "./schema/AbejasState.js";
 import { CardSchema } from "./schema/CardSchema.js";
 import { PlayerSchema } from "./schema/PlayerSchema.js";
 import { PlotSchema } from "./schema/PlotSchema.js";
 import { TradeOfferSchema } from "./schema/TradeOfferSchema.js";
+import { RequestedCardsSchema } from "./schema/RequestedCardsSchema.js";
 import { PendingMandatoryPlantSchema } from "./schema/PendingMandatoryPlantSchema.js";
 
 /**
@@ -50,18 +59,27 @@ function updatePlot(plot: Plot, existing: PlotSchema | undefined): PlotSchema {
   return schema;
 }
 
+function updateRequestedCards(
+  requested: RequestedCards,
+  existing: RequestedCardsSchema | undefined,
+): RequestedCardsSchema {
+  const schema = existing ?? new RequestedCardsSchema();
+  schema.typeId = requested.typeId;
+  schema.count = requested.count;
+  return schema;
+}
+
 function updateTradeOffer(offer: TradeOffer, existing: TradeOfferSchema | undefined): TradeOfferSchema {
   const schema = existing ?? new TradeOfferSchema();
   schema.id = offer.id;
   schema.fromPlayerId = offer.fromPlayerId;
-  schema.requestedTypeId = offer.requestedTypeId;
-  schema.requestedCount = offer.requestedCount;
   schema.status = offer.status;
   syncList(
     schema.offeredCards,
     offer.offeredCards.map((o) => o.card),
     updateCard,
   );
+  syncList(schema.requestedCards, offer.requestedCards, updateRequestedCards);
   return schema;
 }
 
@@ -89,6 +107,7 @@ export function syncStateFromEngine(
   schema.deckCount = engineState.deck.length;
   schema.deckRound = engineState.deckRound;
   schema.awaitingOptionalSow = engineState.awaitingOptionalSow;
+  schema.tradeDrawnThisTurn = engineState.tradeDrawnThisTurn;
   schema.finalTradeRoundDone = engineState.finalTradeRoundDone;
   schema.winnerId = engineState.winnerId ?? "";
 

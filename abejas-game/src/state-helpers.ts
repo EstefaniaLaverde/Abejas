@@ -65,13 +65,20 @@ export function canPlantWithoutDiscard(player: Player, typeId: string): boolean 
 /**
  * Siembra una carta específica en una parcela. Si la parcela no está vacía
  * ni tiene el mismo cultivo, se descarta primero (solo permitido si el
- * jugador no tiene ninguna parcela vacía o con el mismo cultivo disponible).
+ * jugador no tiene ninguna parcela vacía o con el mismo cultivo disponible),
+ * salvo que `force` sea true.
+ *
+ * `force` se usa para la siembra obligatoria de cartas recibidas por
+ * trueque: al ser una siembra forzada por el intercambio, el jugador puede
+ * elegir descartar cualquiera de sus 3 parcelas aunque tenga una vacía o con
+ * el mismo cultivo disponible.
  */
 export function plantCard(
   state: GameState,
   player: Player,
   card: Card,
   targetPlotIndex: number,
+  force = false,
 ): void {
   const plot = player.plots[targetPlotIndex];
   if (!plot) throw new GameError(`Parcela inválida: ${targetPlotIndex}`);
@@ -79,7 +86,7 @@ export function plantCard(
   const isEmpty = plot.cards.length === 0;
   const matchesType = plot.cards[0]?.typeId === card.typeId;
   const canPlantDirectly = isEmpty || matchesType;
-  const hasValidAlternative = canPlantWithoutDiscard(player, card.typeId);
+  const hasValidAlternative = force ? false : canPlantWithoutDiscard(player, card.typeId);
 
   if (!canPlantDirectly) {
     if (hasValidAlternative) {

@@ -18,7 +18,7 @@ import {
   endFinalTradeRoundAndFinishGame,
   GameError,
 } from "@abejas/game";
-import type { GameState } from "@abejas/game";
+import type { GameState, RequestedCards } from "@abejas/game";
 import { AbejasState } from "./schema/AbejasState.js";
 import { PlayerSchema } from "./schema/PlayerSchema.js";
 import { syncStateFromEngine } from "./sync.js";
@@ -129,16 +129,10 @@ export class AbejasRoom extends Room {
 
     proposeTrade: (
       client: Client,
-      payload: { offeredCardIds: string[]; requestedTypeId: string; requestedCount: number },
+      payload: { offeredCardIds: string[]; requestedCards: RequestedCards[] },
     ) => {
       this.act(client, (playerId) =>
-        proposeTrade(
-          this.requireEngine(),
-          playerId,
-          payload.offeredCardIds,
-          payload.requestedTypeId,
-          payload.requestedCount,
-        ),
+        proposeTrade(this.requireEngine(), playerId, payload.offeredCardIds, payload.requestedCards),
       );
     },
 
@@ -166,16 +160,10 @@ export class AbejasRoom extends Room {
 
     proposeFinalRoundTrade: (
       client: Client,
-      payload: { offeredCardIds: string[]; requestedTypeId: string; requestedCount: number },
+      payload: { offeredCardIds: string[]; requestedCards: RequestedCards[] },
     ) => {
       this.act(client, (playerId) =>
-        proposeFinalRoundTrade(
-          this.requireEngine(),
-          playerId,
-          payload.offeredCardIds,
-          payload.requestedTypeId,
-          payload.requestedCount,
-        ),
+        proposeFinalRoundTrade(this.requireEngine(), playerId, payload.offeredCardIds, payload.requestedCards),
       );
     },
 

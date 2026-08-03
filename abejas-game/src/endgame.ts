@@ -1,6 +1,7 @@
-import type { GameState, OfferedCard, TradeOffer } from "./types.js";
+import type { GameState, OfferedCard, RequestedCards, TradeOffer } from "./types.js";
 import { GameError } from "./errors.js";
 import { getPlayer, log, removeFromHand } from "./state-helpers.js";
+import { validateRequestedCards, describeRequestedCards } from "./trade.js";
 
 let finalOfferIdCounter = 0;
 function nextFinalOfferId(): string {
@@ -34,8 +35,7 @@ export function proposeFinalRoundTrade(
   state: GameState,
   fromPlayerId: string,
   offeredCardIds: string[],
-  requestedTypeId: string,
-  requestedCount: number,
+  requestedCards: RequestedCards[],
 ): TradeOffer {
   if (state.phase !== "ronda-final-trueque") {
     throw new GameError("Solo se puede proponer un trueque final durante la ronda final.");
@@ -43,9 +43,7 @@ export function proposeFinalRoundTrade(
   if (offeredCardIds.length === 0) {
     throw new GameError("Debe ofrecerse al menos una carta.");
   }
-  if (requestedCount <= 0) {
-    throw new GameError("La cantidad pedida debe ser mayor a cero.");
-  }
+  validateRequestedCards(requestedCards);
   const player = getPlayer(state, fromPlayerId);
   const offeredCards: OfferedCard[] = offeredCardIds.map((cardId) => ({
     card: removeFromHand(player, cardId),
@@ -56,14 +54,13 @@ export function proposeFinalRoundTrade(
     id: nextFinalOfferId(),
     fromPlayerId,
     offeredCards,
-    requestedTypeId,
-    requestedCount,
+    requestedCards,
     status: "pendiente",
   };
   state.tradeOffers.push(offer);
   log(
     state,
-    `[Ronda final] ${player.name} ofrece ${offeredCards.map((o) => o.card.typeId).join(", ")} a cambio de ${requestedCount}x ${requestedTypeId}.`,
+    `[Ronda final] ${player.name} ofrece ${offeredCards.map((o) => o.card.typeId).join(", ")} a cambio de ${describeRequestedCards(requestedCards)}.`,
   );
   return offer;
 }

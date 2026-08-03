@@ -6,6 +6,7 @@ import TradePanel from "./TradePanel";
 import PendingPlantsPanel from "./PendingPlantsPanel";
 import ActivityLog from "./ActivityLog";
 import CardBadge from "./CardBadge";
+import BeeConversionTable from "./BeeConversionTable";
 
 interface Props {
   snapshot: AbejasStateJSON;
@@ -61,6 +62,8 @@ export default function GameBoard({ snapshot, sessionId, send }: Props) {
         </span>
       </header>
 
+      <BeeConversionTable />
+
       <div className="players-grid">
         {snapshot.players.map((p, i) => (
           <PlayerBoard
@@ -85,7 +88,7 @@ export default function GameBoard({ snapshot, sessionId, send }: Props) {
 
         {snapshot.phase === "trueque" && (
           <>
-            {isMyTurn && snapshot.pendingTradeDraw.length === 0 && (
+            {isMyTurn && !snapshot.tradeDrawnThisTurn && (
               <button type="button" onClick={() => send("drawTradeCards")}>
                 Robar 2 cartas
               </button>
@@ -131,7 +134,7 @@ export default function GameBoard({ snapshot, sessionId, send }: Props) {
 
         {snapshot.phase === "toma" && isMyTurn && (
           <button type="button" onClick={() => send("drawEndOfTurnCards")}>
-            Tomar 2 cartas
+            Tomar 3 cartas
           </button>
         )}
 

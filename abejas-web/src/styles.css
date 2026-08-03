@@ -301,6 +301,56 @@ select {
   font-size: 0.85rem;
 }
 
+.requested-cards-list {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0;
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+.requested-cards-list li {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* --- Tabla de conversión de abejas --- */
+.bee-conversion-table {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.6rem 1rem;
+  margin-bottom: 1rem;
+  font-size: 0.85rem;
+}
+.bee-conversion-table summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.bee-conversion-table table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.6rem;
+}
+.bee-conversion-table th,
+.bee-conversion-table td {
+  text-align: left;
+  padding: 0.3rem 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+.bee-conversion-table .type-swatch {
+  display: inline-block;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  margin-right: 0.4rem;
+}
+
 /* --- Activity log --- */
 .activity-log {
   background: var(--panel);

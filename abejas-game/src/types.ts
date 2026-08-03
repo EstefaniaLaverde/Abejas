@@ -53,15 +53,20 @@ export interface OfferedCard {
   origin: TradeCardOrigin;
 }
 
+/** Un tipo de cultivo y cuántas cartas de ese tipo se piden. */
+export interface RequestedCards {
+  typeId: CardTypeId;
+  count: number;
+}
+
 /** Oferta de trueque activa, visible para todos los jugadores. */
 export interface TradeOffer {
   id: string;
   fromPlayerId: string;
   /** Cartas que el jugador ofrece (de su mano o recién robadas). */
   offeredCards: OfferedCard[];
-  /** Cartas que el jugador está pidiendo a cambio (por tipo y cantidad). */
-  requestedTypeId: CardTypeId;
-  requestedCount: number;
+  /** Cartas que el jugador está pidiendo a cambio, pudiendo ser de varios tipos distintos. */
+  requestedCards: RequestedCards[];
   status: "pendiente" | "aceptada" | "rechazada" | "cancelada";
 }
 
@@ -84,6 +89,8 @@ export interface GameState {
   awaitingOptionalSow: boolean;
   /** Cartas recién robadas en la fase de trueque, pendientes de jugarse. */
   pendingTradeDraw: Card[];
+  /** true una vez el jugador en turno ya robó sus cartas de trueque este turno (no puede volver a robar aunque ya las haya jugado todas). */
+  tradeDrawnThisTurn: boolean;
   tradeOffers: TradeOffer[];
   pendingMandatoryPlants: PendingMandatoryPlant[];
   /** true una vez se jugó la ronda final de trueques (post segunda ronda). */

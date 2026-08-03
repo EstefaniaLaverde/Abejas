@@ -72,5 +72,6 @@ function finishSowPhase(state: GameState, playerId: string): void {
   const player = getPlayer(state, playerId);
   state.awaitingOptionalSow = false;
   state.phase = "trueque";
+  state.tradeDrawnThisTurn = false;
   log(state, `${player.name} termina la siembra y pasa a la fase de trueque.`);
 }

@@ -20,6 +20,8 @@ export class AbejasState extends Schema {
 
   /** Cartas robadas para el trueque, boca arriba: públicas. */
   @type([CardSchema]) pendingTradeDraw = new ArraySchema<CardSchema>();
+  /** true si el jugador en turno ya robó sus cartas de trueque este turno. */
+  @type("boolean") tradeDrawnThisTurn = false;
 
   @type([TradeOfferSchema]) tradeOffers = new ArraySchema<TradeOfferSchema>();
   @type([PendingMandatoryPlantSchema]) pendingMandatoryPlants = new ArraySchema<PendingMandatoryPlantSchema>();

@@ -29,12 +29,17 @@ export interface PlayerJSON {
 
 export type TradeOfferStatus = "pendiente" | "aceptada" | "rechazada" | "cancelada";
 
+export interface RequestedCardsJSON {
+  typeId: string;
+  count: number;
+}
+
 export interface TradeOfferJSON {
   id: string;
   fromPlayerId: string;
   offeredCards: CardJSON[];
-  requestedTypeId: string;
-  requestedCount: number;
+  /** Puede incluir varios tipos de cultivo distintos. */
+  requestedCards: RequestedCardsJSON[];
   status: TradeOfferStatus;
 }
 
@@ -60,6 +65,7 @@ export interface AbejasStateJSON {
   compost: CardJSON[];
   awaitingOptionalSow: boolean;
   pendingTradeDraw: CardJSON[];
+  tradeDrawnThisTurn: boolean;
   tradeOffers: TradeOfferJSON[];
   pendingMandatoryPlants: PendingMandatoryPlantJSON[];
   finalTradeRoundDone: boolean;

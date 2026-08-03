@@ -20,7 +20,12 @@ export function normalizeSnapshot(raw: Partial<AbejasStateJSON> | null | undefin
     compost: source.compost ?? [],
     awaitingOptionalSow: source.awaitingOptionalSow ?? false,
     pendingTradeDraw: source.pendingTradeDraw ?? [],
-    tradeOffers: (source.tradeOffers ?? []).map((o) => ({ ...o, offeredCards: o.offeredCards ?? [] })),
+    tradeDrawnThisTurn: source.tradeDrawnThisTurn ?? false,
+    tradeOffers: (source.tradeOffers ?? []).map((o) => ({
+      ...o,
+      offeredCards: o.offeredCards ?? [],
+      requestedCards: o.requestedCards ?? [],
+    })),
     pendingMandatoryPlants: source.pendingMandatoryPlants ?? [],
     finalTradeRoundDone: source.finalTradeRoundDone ?? false,
     winnerId: source.winnerId ?? "",
