@@ -119,12 +119,15 @@ function returnRejectedOffer(state: GameState, offer: TradeOffer): void {
   }
 }
 
-/** Cancela una oferta propia que sigue pendiente. */
-export function cancelTrade(state: GameState, offerId: string): void {
+/** Cancela una oferta propia que sigue pendiente (solo quien la propuso puede cancelarla). */
+export function cancelTrade(state: GameState, offerId: string, playerId: string): void {
   const offer = state.tradeOffers.find((o) => o.id === offerId);
   if (!offer) throw new GameError(`Oferta desconocida: ${offerId}`);
   if (offer.status !== "pendiente") {
     throw new GameError(`La oferta ${offerId} ya no está pendiente.`);
+  }
+  if (offer.fromPlayerId !== playerId) {
+    throw new GameError(`${playerId} no puede cancelar una oferta que no es suya.`);
   }
   offer.status = "cancelada";
   returnRejectedOffer(state, offer);

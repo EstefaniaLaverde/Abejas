@@ -93,9 +93,16 @@ describe("trueque", () => {
     const offer = proposeTrade(state, currentId, [drawnCard.id], "coca", 5);
     expect(state.pendingTradeDraw.length).toBe(1);
 
-    cancelTrade(state, offer.id);
+    cancelTrade(state, offer.id, currentId);
     expect(state.pendingTradeDraw.length).toBe(2);
     expect(state.pendingTradeDraw.find((c) => c.id === drawnCard.id)).toBeDefined();
+  });
+
+  it("solo quien propuso la oferta puede cancelarla", () => {
+    drawTradeCards(state, currentId);
+    const drawnCard = state.pendingTradeDraw[0]!;
+    const offer = proposeTrade(state, currentId, [drawnCard.id], "coca", 5);
+    expect(() => cancelTrade(state, offer.id, otherId)).toThrow();
   });
 
   it("las cartas de mano ofrecidas y rechazadas vuelven a la mano (no a lo pendiente de robo)", () => {
@@ -105,7 +112,7 @@ describe("trueque", () => {
     const offer = proposeTrade(state, currentId, ["handcard"], "coca", 5);
     expect(player.hand.find((c) => c.id === "handcard")).toBeUndefined();
 
-    cancelTrade(state, offer.id);
+    cancelTrade(state, offer.id, currentId);
     expect(player.hand.find((c) => c.id === "handcard")).toBeDefined();
     expect(state.pendingTradeDraw.find((c) => c.id === "handcard")).toBeUndefined();
   });

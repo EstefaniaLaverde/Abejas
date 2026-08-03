@@ -1,0 +1,25 @@
+{
+  "name": "@abejas/server",
+  "version": "0.1.0",
+  "description": "Servidor multijugador (Colyseus) para el juego de cartas Abejas",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/main.ts",
+    "start": "node dist/main.js",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test test/*.test.ts"
+  },
+  "dependencies": {
+    "@abejas/game": "^0.1.0",
+    "@colyseus/schema": "^4.0.30",
+    "colyseus": "^0.17.10"
+  },
+  "devDependencies": {
+    "@colyseus/playground": "^0.17.12",
+    "@colyseus/sdk": "^0.17.0",
+    "@colyseus/testing": "^0.17.11",
+    "typescript": "^5.5.4",
+    "tsx": "^4.19.0"
+  }
+}
