@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Client, Room } from "@colyseus/sdk";
 import type { AbejasStateJSON } from "./types";
+import { normalizeSnapshot } from "./normalizeSnapshot";
 
 export interface ConnectOptions {
   serverUrl: string;
@@ -30,10 +31,10 @@ export function useAbejasRoom() {
       roomRef.current = room;
       setSessionId(room.sessionId);
       setRoomId(room.roomId);
-      setSnapshot((room.state as { toJSON(): AbejasStateJSON }).toJSON());
+      setSnapshot(normalizeSnapshot((room.state as { toJSON(): AbejasStateJSON }).toJSON()));
 
       room.onStateChange((state: { toJSON(): AbejasStateJSON }) => {
-        setSnapshot(state.toJSON());
+        setSnapshot(normalizeSnapshot(state.toJSON()));
       });
 
       room.onMessage("error", (message: string) => {
