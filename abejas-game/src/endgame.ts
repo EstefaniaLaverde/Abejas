@@ -1,0 +1,104 @@
+import type { GameState, OfferedCard, TradeOffer } from "./types.js";
+import { GameError } from "./errors.js";
+import { getPlayer, log, removeFromHand } from "./state-helpers.js";
+
+let finalOfferIdCounter = 0;
+function nextFinalOfferId(): string {
+  finalOfferIdCounter += 1;
+  return `final-offer-${finalOfferIdCounter}`;
+}
+
+/**
+ * Se agotó el mazo (tras la segunda ronda con el compost): se activa la
+ * ronda final de trueques, en la que todos los jugadores pueden negociar
+ * libremente antes del conteo final.
+ */
+export function triggerEndOfMainPlay(state: GameState): void {
+  if (state.phase === "ronda-final-trueque" || state.phase === "terminado") return;
+  state.phase = "ronda-final-trueque";
+  state.awaitingOptionalSow = false;
+  // Cualquier carta robada a medias que quedó sin jugar (por quedarse el
+  // mazo sin cartas a mitad de un robo) se va al compost, no desaparece.
+  if (state.pendingTradeDraw.length > 0) {
+    state.compost.push(...state.pendingTradeDraw);
+    state.pendingTradeDraw = [];
+  }
+  log(state, "Se agotaron las cartas. Comienza la ronda final de trueques.");
+}
+
+/**
+ * En la ronda final, cualquier jugador (no solo el que tenga el turno)
+ * puede ofrecer cartas de su mano a cambio de otras.
+ */
+export function proposeFinalRoundTrade(
+  state: GameState,
+  fromPlayerId: string,
+  offeredCardIds: string[],
+  requestedTypeId: string,
+  requestedCount: number,
+): TradeOffer {
+  if (state.phase !== "ronda-final-trueque") {
+    throw new GameError("Solo se puede proponer un trueque final durante la ronda final.");
+  }
+  if (offeredCardIds.length === 0) {
+    throw new GameError("Debe ofrecerse al menos una carta.");
+  }
+  if (requestedCount <= 0) {
+    throw new GameError("La cantidad pedida debe ser mayor a cero.");
+  }
+  const player = getPlayer(state, fromPlayerId);
+  const offeredCards: OfferedCard[] = offeredCardIds.map((cardId) => ({
+    card: removeFromHand(player, cardId),
+    origin: "hand" as const,
+  }));
+
+  const offer: TradeOffer = {
+    id: nextFinalOfferId(),
+    fromPlayerId,
+    offeredCards,
+    requestedTypeId,
+    requestedCount,
+    status: "pendiente",
+  };
+  state.tradeOffers.push(offer);
+  log(
+    state,
+    `[Ronda final] ${player.name} ofrece ${offeredCards.map((o) => o.card.typeId).join(", ")} a cambio de ${requestedCount}x ${requestedTypeId}.`,
+  );
+  return offer;
+}
+
+/**
+ * Cierra la ronda final de trueques y termina la partida: calcula el
+ * ganador por abejas, desempatando por número de cartas en mano. No se
+ * descartan las cartas que queden en mano de cada jugador.
+ */
+export function endFinalTradeRoundAndFinishGame(state: GameState): void {
+  if (state.phase !== "ronda-final-trueque") {
+    throw new GameError("No se está en la ronda final de trueques.");
+  }
+  const pendingOffers = state.tradeOffers.filter((o) => o.status === "pendiente");
+  if (pendingOffers.length > 0) {
+    throw new GameError("Hay ofertas de la ronda final por resolver.");
+  }
+  if (state.pendingMandatoryPlants.length > 0) {
+    throw new GameError("Hay cartas de la ronda final pendientes de sembrar.");
+  }
+
+  state.finalTradeRoundDone = true;
+  state.phase = "terminado";
+
+  let winner = state.players[0]!;
+  for (const player of state.players) {
+    if (player.bees > winner.bees) {
+      winner = player;
+    } else if (player.bees === winner.bees && player.hand.length > winner.hand.length) {
+      winner = player;
+    }
+  }
+  state.winnerId = winner.id;
+  log(
+    state,
+    `Partida terminada. Gana ${winner.name} con ${winner.bees} abejas (${winner.hand.length} cartas en mano).`,
+  );
+}
