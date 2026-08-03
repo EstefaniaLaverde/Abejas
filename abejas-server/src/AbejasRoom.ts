@@ -10,6 +10,7 @@ import {
   plantDrawnCard,
   proposeTrade,
   cancelTrade,
+  rejectTrade,
   acceptTrade,
   plantMandatoryTradeCard,
   finishTradePhase,
@@ -129,15 +130,25 @@ export class AbejasRoom extends Room {
 
     proposeTrade: (
       client: Client,
-      payload: { offeredCardIds: string[]; requestedCards: RequestedCards[] },
+      payload: { offeredCardIds: string[]; requestedCards: RequestedCards[]; toPlayerId?: string },
     ) => {
       this.act(client, (playerId) =>
-        proposeTrade(this.requireEngine(), playerId, payload.offeredCardIds, payload.requestedCards),
+        proposeTrade(
+          this.requireEngine(),
+          playerId,
+          payload.offeredCardIds,
+          payload.requestedCards,
+          payload.toPlayerId,
+        ),
       );
     },
 
     cancelTrade: (client: Client, payload: { offerId: string }) => {
       this.act(client, (playerId) => cancelTrade(this.requireEngine(), payload.offerId, playerId));
+    },
+
+    rejectTrade: (client: Client, payload: { offerId: string }) => {
+      this.act(client, (playerId) => rejectTrade(this.requireEngine(), payload.offerId, playerId));
     },
 
     acceptTrade: (client: Client, payload: { offerId: string }) => {
@@ -160,10 +171,16 @@ export class AbejasRoom extends Room {
 
     proposeFinalRoundTrade: (
       client: Client,
-      payload: { offeredCardIds: string[]; requestedCards: RequestedCards[] },
+      payload: { offeredCardIds: string[]; requestedCards: RequestedCards[]; toPlayerId?: string },
     ) => {
       this.act(client, (playerId) =>
-        proposeFinalRoundTrade(this.requireEngine(), playerId, payload.offeredCardIds, payload.requestedCards),
+        proposeFinalRoundTrade(
+          this.requireEngine(),
+          playerId,
+          payload.offeredCardIds,
+          payload.requestedCards,
+          payload.toPlayerId,
+        ),
       );
     },
 

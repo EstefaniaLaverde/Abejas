@@ -9,5 +9,7 @@ export class TradeOfferSchema extends Schema {
   @type([CardSchema]) offeredCards = new ArraySchema<CardSchema>();
   /** Puede incluir varios tipos de cultivo distintos. */
   @type([RequestedCardsSchema]) requestedCards = new ArraySchema<RequestedCardsSchema>();
+  /** Si no está vacío, es un regalo dirigido a ese jugador específico. */
+  @type("string") toPlayerId = "";
   @type("string") status: "pendiente" | "aceptada" | "rechazada" | "cancelada" = "pendiente";
 }

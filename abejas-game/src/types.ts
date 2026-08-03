@@ -65,8 +65,14 @@ export interface TradeOffer {
   fromPlayerId: string;
   /** Cartas que el jugador ofrece (de su mano o recién robadas). */
   offeredCards: OfferedCard[];
-  /** Cartas que el jugador está pidiendo a cambio, pudiendo ser de varios tipos distintos. */
+  /**
+   * Cartas que el jugador está pidiendo a cambio, pudiendo ser de varios
+   * tipos distintos. Vacío cuando es un regalo (no se pide nada a cambio),
+   * en cuyo caso `toPlayerId` es obligatorio.
+   */
   requestedCards: RequestedCards[];
+  /** Si se da, es un regalo dirigido: solo este jugador puede aceptarlo o rechazarlo. */
+  toPlayerId?: string;
   status: "pendiente" | "aceptada" | "rechazada" | "cancelada";
 }
 

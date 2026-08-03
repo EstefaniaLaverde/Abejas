@@ -29,13 +29,15 @@ export function triggerEndOfMainPlay(state: GameState): void {
 
 /**
  * En la ronda final, cualquier jugador (no solo el que tenga el turno)
- * puede ofrecer cartas de su mano a cambio de otras.
+ * puede ofrecer cartas de su mano a cambio de otras, o regalarlas a un
+ * jugador específico (`toPlayerId`, sin pedir nada a cambio).
  */
 export function proposeFinalRoundTrade(
   state: GameState,
   fromPlayerId: string,
   offeredCardIds: string[],
   requestedCards: RequestedCards[],
+  toPlayerId?: string,
 ): TradeOffer {
   if (state.phase !== "ronda-final-trueque") {
     throw new GameError("Solo se puede proponer un trueque final durante la ronda final.");
@@ -43,7 +45,13 @@ export function proposeFinalRoundTrade(
   if (offeredCardIds.length === 0) {
     throw new GameError("Debe ofrecerse al menos una carta.");
   }
-  validateRequestedCards(requestedCards);
+  if (toPlayerId) {
+    if (toPlayerId === fromPlayerId) {
+      throw new GameError("No puedes regalarte una carta a ti mismo.");
+    }
+    getPlayer(state, toPlayerId); // valida que exista
+  }
+  validateRequestedCards(requestedCards, Boolean(toPlayerId));
   const player = getPlayer(state, fromPlayerId);
   const offeredCards: OfferedCard[] = offeredCardIds.map((cardId) => ({
     card: removeFromHand(player, cardId),
@@ -55,12 +63,16 @@ export function proposeFinalRoundTrade(
     fromPlayerId,
     offeredCards,
     requestedCards,
+    ...(toPlayerId ? { toPlayerId } : {}),
     status: "pendiente",
   };
   state.tradeOffers.push(offer);
+  const target = toPlayerId ? getPlayer(state, toPlayerId) : null;
   log(
     state,
-    `[Ronda final] ${player.name} ofrece ${offeredCards.map((o) => o.card.typeId).join(", ")} a cambio de ${describeRequestedCards(requestedCards)}.`,
+    target
+      ? `[Ronda final] ${player.name} le regala ${offeredCards.map((o) => o.card.typeId).join(", ")} a ${target.name}.`
+      : `[Ronda final] ${player.name} ofrece ${offeredCards.map((o) => o.card.typeId).join(", ")} a cambio de ${describeRequestedCards(requestedCards)}.`,
   );
   return offer;
 }

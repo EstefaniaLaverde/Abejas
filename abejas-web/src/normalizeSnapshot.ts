@@ -25,6 +25,7 @@ export function normalizeSnapshot(raw: Partial<AbejasStateJSON> | null | undefin
       ...o,
       offeredCards: o.offeredCards ?? [],
       requestedCards: o.requestedCards ?? [],
+      toPlayerId: o.toPlayerId ?? "",
     })),
     pendingMandatoryPlants: source.pendingMandatoryPlants ?? [],
     finalTradeRoundDone: source.finalTradeRoundDone ?? false,

@@ -40,6 +40,8 @@ export interface TradeOfferJSON {
   offeredCards: CardJSON[];
   /** Puede incluir varios tipos de cultivo distintos. */
   requestedCards: RequestedCardsJSON[];
+  /** Si no está vacío, es un regalo dirigido a ese jugador específico. */
+  toPlayerId: string;
   status: TradeOfferStatus;
 }
 

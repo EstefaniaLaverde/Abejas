@@ -59,9 +59,14 @@ export function plantDrawnCard(
   log(state, `${player.name} planta directamente ${card!.typeId} (carta robada) en la parcela ${targetPlotIndex}.`);
 }
 
-export function validateRequestedCards(requestedCards: RequestedCards[]): void {
-  if (requestedCards.length === 0) {
-    throw new GameError("Debe pedirse al menos un tipo de cultivo.");
+/**
+ * Valida `requestedCards`. Se permite vacío (regalo: no se pide nada a
+ * cambio), pero en ese caso `isGift` debe ser true, lo cual el llamador
+ * garantiza exigiendo un `toPlayerId`.
+ */
+export function validateRequestedCards(requestedCards: RequestedCards[], isGift = false): void {
+  if (requestedCards.length === 0 && !isGift) {
+    throw new GameError("Debe pedirse al menos un tipo de cultivo (o dirigir la oferta a un jugador como regalo).");
   }
   for (const { typeId, count } of requestedCards) {
     if (!typeId) {
@@ -74,27 +79,40 @@ export function validateRequestedCards(requestedCards: RequestedCards[]): void {
 }
 
 export function describeRequestedCards(requestedCards: RequestedCards[]): string {
+  if (requestedCards.length === 0) return "nada (regalo)";
   return requestedCards.map((r) => `${r.count}x ${r.typeId}`).join(", ");
 }
 
 /**
- * El jugador en turno propone un trueque abierto: ofrece cartas (de su mano
- * y/o de las que acaba de robar) a cambio de `requestedCards`, que puede
- * incluir varios tipos de cultivo distintos. Cualquier otro jugador que
- * tenga todas las cartas pedidas puede aceptarla.
+ * El jugador en turno propone un trueque: ofrece cartas (de su mano y/o de
+ * las que acaba de robar) a cambio de `requestedCards`, que puede incluir
+ * varios tipos de cultivo distintos.
+ *
+ * Si `toPlayerId` se da, es un regalo dirigido a ese jugador específico (solo
+ * él puede aceptarlo o rechazarlo) y `requestedCards` puede ir vacío (no se
+ * pide nada a cambio). Si no se da, la oferta es abierta: cualquier otro
+ * jugador que tenga todas las cartas pedidas puede aceptarla, y debe pedirse
+ * al menos un tipo de cultivo.
  */
 export function proposeTrade(
   state: GameState,
   fromPlayerId: string,
   offeredCardIds: string[],
   requestedCards: RequestedCards[],
+  toPlayerId?: string,
 ): TradeOffer {
   assertIsCurrentPlayer(state, fromPlayerId);
   assertPhase(state, "trueque");
   if (offeredCardIds.length === 0) {
     throw new GameError("Debe ofrecerse al menos una carta.");
   }
-  validateRequestedCards(requestedCards);
+  if (toPlayerId) {
+    if (toPlayerId === fromPlayerId) {
+      throw new GameError("No puedes regalarte una carta a ti mismo.");
+    }
+    getPlayer(state, toPlayerId); // valida que exista
+  }
+  validateRequestedCards(requestedCards, Boolean(toPlayerId));
   const player = getPlayer(state, fromPlayerId);
 
   const offeredCards: OfferedCard[] = offeredCardIds.map((cardId) => {
@@ -112,12 +130,16 @@ export function proposeTrade(
     fromPlayerId,
     offeredCards,
     requestedCards,
+    ...(toPlayerId ? { toPlayerId } : {}),
     status: "pendiente",
   };
   state.tradeOffers.push(offer);
+  const target = toPlayerId ? getPlayer(state, toPlayerId) : null;
   log(
     state,
-    `${player.name} ofrece ${offeredCards.map((o) => o.card.typeId).join(", ")} a cambio de ${describeRequestedCards(requestedCards)}.`,
+    target
+      ? `${player.name} le regala ${offeredCards.map((o) => o.card.typeId).join(", ")} a ${target.name}.`
+      : `${player.name} ofrece ${offeredCards.map((o) => o.card.typeId).join(", ")} a cambio de ${describeRequestedCards(requestedCards)}.`,
   );
   return offer;
 }
@@ -150,13 +172,35 @@ export function cancelTrade(state: GameState, offerId: string, playerId: string)
   log(state, `Se cancela la oferta ${offerId}.`);
 }
 
-/** Un jugador rechaza (deja pasar) una oferta sin aceptarla; no cierra la oferta por sí sola. */
+/**
+ * El destinatario de un regalo dirigido (`toPlayerId`) lo rechaza sin
+ * aceptarlo. La(s) carta(s) ofrecida(s) vuelven a quien las regaló, igual
+ * que al cancelar. Solo aplica a ofertas dirigidas: las ofertas abiertas no
+ * se "rechazan" (simplemente no se aceptan, y el proponente puede
+ * cancelarlas si quiere retirarlas).
+ */
+export function rejectTrade(state: GameState, offerId: string, playerId: string): void {
+  const offer = state.tradeOffers.find((o) => o.id === offerId);
+  if (!offer) throw new GameError(`Oferta desconocida: ${offerId}`);
+  if (offer.status !== "pendiente") {
+    throw new GameError(`La oferta ${offerId} ya no está pendiente.`);
+  }
+  if (offer.toPlayerId !== playerId) {
+    throw new GameError(`${playerId} no puede rechazar una oferta que no está dirigida a él.`);
+  }
+  const offeror = getPlayer(state, offer.fromPlayerId);
+  const rejecting = getPlayer(state, playerId);
+  offer.status = "rechazada";
+  returnRejectedOffer(state, offer);
+  log(state, `${rejecting.name} rechaza el regalo de ${offeror.name}.`);
+}
 
 /**
  * Un jugador distinto al proponente acepta la oferta: entrega las cartas
  * pedidas en `requestedCards` (pudiendo ser de varios tipos distintos) de su
  * mano y recibe las cartas ofrecidas. Ambas partes quedan con la obligación
- * de sembrar lo que recibieron.
+ * de sembrar lo que recibieron. Si la oferta es un regalo dirigido
+ * (`toPlayerId`), solo ese jugador puede aceptarla.
  */
 export function acceptTrade(
   state: GameState,
@@ -170,6 +214,9 @@ export function acceptTrade(
   }
   if (offer.fromPlayerId === acceptingPlayerId) {
     throw new GameError("El proponente no puede aceptar su propia oferta.");
+  }
+  if (offer.toPlayerId && offer.toPlayerId !== acceptingPlayerId) {
+    throw new GameError(`Este regalo está dirigido a otro jugador.`);
   }
   const acceptor = getPlayer(state, acceptingPlayerId);
   const offeror = getPlayer(state, offer.fromPlayerId);

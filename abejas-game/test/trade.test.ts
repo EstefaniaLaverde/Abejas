@@ -7,6 +7,7 @@ import {
   proposeTrade,
   acceptTrade,
   cancelTrade,
+  rejectTrade,
   plantMandatoryTradeCard,
   finishTradePhase,
   plantDrawnCard,
@@ -174,5 +175,90 @@ describe("trueque", () => {
     plantDrawnCard(state, currentId, c2!.id, 2);
     expect(state.pendingTradeDraw.length).toBe(0);
     expect(() => drawTradeCards(state, currentId)).toThrow();
+  });
+
+  describe("regalos dirigidos", () => {
+    it("el jugador en turno puede regalar una carta robada a un jugador específico, sin pedir nada", () => {
+      drawTradeCards(state, currentId);
+      const drawnCard = state.pendingTradeDraw[0]!;
+
+      const offer = proposeTrade(state, currentId, [drawnCard.id], [], otherId);
+      expect(offer.toPlayerId).toBe(otherId);
+      expect(offer.requestedCards).toEqual([]);
+      expect(state.pendingTradeDraw.find((c) => c.id === drawnCard.id)).toBeUndefined();
+
+      acceptTrade(state, offer.id, otherId);
+      expect(state.pendingMandatoryPlants).toEqual([
+        { playerId: otherId, card: drawnCard, reason: "trueque" },
+      ]);
+    });
+
+    it("el jugador en turno puede regalar una carta de su mano", () => {
+      const player = state.players[0]!;
+      player.hand.push(makeCard("capuchina", "giftcard"));
+      drawTradeCards(state, currentId);
+
+      const offer = proposeTrade(state, currentId, ["giftcard"], [], otherId);
+      expect(player.hand.find((c) => c.id === "giftcard")).toBeUndefined();
+
+      acceptTrade(state, offer.id, otherId);
+      expect(state.pendingMandatoryPlants.some((p) => p.card.id === "giftcard" && p.playerId === otherId)).toBe(
+        true,
+      );
+    });
+
+    it("un regalo requiere un jugador destinatario (si no se pide nada a cambio)", () => {
+      drawTradeCards(state, currentId);
+      const drawnCard = state.pendingTradeDraw[0]!;
+      expect(() => proposeTrade(state, currentId, [drawnCard.id], [])).toThrow();
+    });
+
+    it("solo el jugador destinatario puede aceptar un regalo dirigido", () => {
+      state = createInitialGameState(["Ana", "Beto", "Caro"], { rng: createRng(3), startingPlayerIndex: 0 });
+      currentId = state.players[0]!.id;
+      const otherId2 = state.players[2]!.id;
+      const player = state.players[0]!;
+      player.hand = [makeCard("lulo", "sow1")];
+      sowMandatoryCard(state, currentId, 0);
+      skipOptionalSow(state, currentId);
+      drawTradeCards(state, currentId);
+      const drawnCard = state.pendingTradeDraw[0]!;
+
+      const offer = proposeTrade(state, currentId, [drawnCard.id], [], otherId);
+      expect(() => acceptTrade(state, offer.id, otherId2)).toThrow();
+    });
+
+    it("el destinatario puede rechazar el regalo y la carta vuelve a quien la ofreció", () => {
+      drawTradeCards(state, currentId);
+      const drawnCard = state.pendingTradeDraw[0]!;
+      const offer = proposeTrade(state, currentId, [drawnCard.id], [], otherId);
+
+      rejectTrade(state, offer.id, otherId);
+      expect(state.pendingTradeDraw.find((c) => c.id === drawnCard.id)).toBeDefined();
+    });
+
+    it("quien regala también puede cancelar el regalo antes de que lo respondan", () => {
+      drawTradeCards(state, currentId);
+      const drawnCard = state.pendingTradeDraw[0]!;
+      const offer = proposeTrade(state, currentId, [drawnCard.id], [], otherId);
+
+      cancelTrade(state, offer.id, currentId);
+      expect(state.pendingTradeDraw.find((c) => c.id === drawnCard.id)).toBeDefined();
+    });
+
+    it("un jugador que no es el destinatario no puede rechazar el regalo", () => {
+      state = createInitialGameState(["Ana", "Beto", "Caro"], { rng: createRng(3), startingPlayerIndex: 0 });
+      currentId = state.players[0]!.id;
+      const otherId2 = state.players[2]!.id;
+      const player = state.players[0]!;
+      player.hand = [makeCard("lulo", "sow1")];
+      sowMandatoryCard(state, currentId, 0);
+      skipOptionalSow(state, currentId);
+      drawTradeCards(state, currentId);
+      const drawnCard = state.pendingTradeDraw[0]!;
+
+      const offer = proposeTrade(state, currentId, [drawnCard.id], [], otherId);
+      expect(() => rejectTrade(state, offer.id, otherId2)).toThrow();
+    });
   });
 });

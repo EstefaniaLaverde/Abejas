@@ -73,6 +73,7 @@ function updateTradeOffer(offer: TradeOffer, existing: TradeOfferSchema | undefi
   const schema = existing ?? new TradeOfferSchema();
   schema.id = offer.id;
   schema.fromPlayerId = offer.fromPlayerId;
+  schema.toPlayerId = offer.toPlayerId ?? "";
   schema.status = offer.status;
   syncList(
     schema.offeredCards,

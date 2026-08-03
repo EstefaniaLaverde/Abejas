@@ -16,6 +16,7 @@ export {
   plantDrawnCard,
   proposeTrade,
   cancelTrade,
+  rejectTrade,
   acceptTrade,
   plantMandatoryTradeCard,
   finishTradePhase,
