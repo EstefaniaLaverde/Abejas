@@ -1,0 +1,366 @@
+:root {
+  --bg: #f4ede2;
+  --panel: #ffffff;
+  --ink: #2b2118;
+  --muted: #8a7f70;
+  --accent: #2e7d32;
+  --accent-dark: #1b5e20;
+  --border: #e0d5c3;
+  font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+.app {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+button {
+  cursor: pointer;
+  font-family: inherit;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: white;
+  border-radius: 6px;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.9rem;
+}
+
+button:hover:not(:disabled) {
+  background: var(--accent-dark);
+}
+
+button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.link-button {
+  background: none;
+  border: none;
+  color: var(--accent-dark);
+  text-decoration: underline;
+  padding: 0;
+}
+
+input,
+select {
+  font-family: inherit;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+/* --- Connect screen --- */
+.connect-screen {
+  max-width: 420px;
+  margin: 3rem auto;
+  text-align: center;
+}
+.connect-screen h1 {
+  font-size: 2.5rem;
+  margin-bottom: 0;
+}
+.subtitle {
+  color: var(--muted);
+  margin-top: 0.25rem;
+}
+.connect-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  text-align: left;
+  margin-top: 1.5rem;
+}
+.connect-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.9rem;
+}
+.join-by-id {
+  margin-top: 1.5rem;
+  text-align: left;
+}
+.error-text {
+  color: #b00020;
+  margin-top: 1rem;
+}
+
+/* --- Lobby --- */
+.lobby {
+  max-width: 420px;
+  margin: 3rem auto;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.5rem;
+  text-align: center;
+}
+.room-code {
+  background: #fff8e1;
+  border-radius: 6px;
+  padding: 0.5rem;
+}
+.player-list {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0;
+}
+.player-list li {
+  padding: 0.4rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+/* --- Game board --- */
+.game-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: space-between;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+}
+.turn-indicator {
+  font-weight: 600;
+}
+
+.players-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.player-board {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.75rem;
+}
+.player-board.current-turn {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent);
+}
+.player-board.self {
+  background: #f1f8e9;
+}
+.player-board-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+.player-board-header h3 {
+  margin: 0;
+  flex: 1;
+  font-size: 1rem;
+}
+.bees {
+  font-weight: 600;
+}
+
+.plots {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.plot {
+  border: 1px dashed var(--border);
+  border-radius: 6px;
+  padding: 0.4rem;
+}
+.plot.empty {
+  opacity: 0.6;
+}
+.plot-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  margin-bottom: 0.25rem;
+}
+.plot-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+.target-button {
+  margin-top: 0.4rem;
+  width: 100%;
+}
+
+/* --- Cards --- */
+.hand {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.5rem 0;
+}
+.card-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border: 2px solid #999;
+  border-radius: 999px;
+  padding: 0.25rem 0.6rem;
+  background: white;
+  font-size: 0.8rem;
+  color: var(--ink);
+}
+.card-badge.static {
+  cursor: default;
+}
+.card-badge.selected {
+  background: #fff59d;
+  border-style: solid;
+}
+.card-badge .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.card-badge .count {
+  font-weight: 600;
+}
+
+/* --- Your area --- */
+.your-area {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+.your-area h3 {
+  margin-top: 0;
+}
+
+.sow-panel,
+.trade-panel,
+.pending-plants {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.target-buttons,
+.pending-plant-row {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 0.4rem;
+}
+
+.propose-trade-row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: end;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+}
+.propose-trade-row label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.85rem;
+}
+
+.trade-offers ul {
+  list-style: none;
+  padding: 0;
+}
+.trade-offer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  margin-bottom: 0.4rem;
+  font-size: 0.85rem;
+}
+
+/* --- Activity log --- */
+.activity-log {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1rem;
+  max-height: 220px;
+  overflow-y: auto;
+}
+.activity-log ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.activity-log li {
+  padding: 0.2rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+/* --- Result screen --- */
+.result-screen {
+  max-width: 480px;
+  margin: 3rem auto;
+  text-align: center;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.5rem;
+}
+.winner-line {
+  font-size: 1.1rem;
+}
+.score-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+.score-table th,
+.score-table td {
+  border-bottom: 1px solid var(--border);
+  padding: 0.5rem;
+  text-align: left;
+}
+.winner-row {
+  background: #fff59d;
+  font-weight: 600;
+}
+
+/* --- Toast --- */
+.toast {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  background: #b00020;
+  color: white;
+  padding: 0.6rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  max-width: 320px;
+  z-index: 10;
+}
