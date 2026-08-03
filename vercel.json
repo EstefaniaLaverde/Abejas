@@ -1,0 +1,5 @@
+{
+  "buildCommand": "npm run build -w abejas-game && npm run build -w abejas-web",
+  "installCommand": "npm install",
+  "outputDirectory": "abejas-web/dist"
+}
