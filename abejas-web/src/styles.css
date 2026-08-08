@@ -1,11 +1,16 @@
 :root {
-  --bg: #f4ede2;
-  --panel: #ffffff;
+  --bg: #f2e8d5;
+  --panel: #fffbf4;
   --ink: #2b2118;
   --muted: #8a7f70;
-  --accent: #2e7d32;
-  --accent-dark: #1b5e20;
-  --border: #e0d5c3;
+  --accent: #3f6b3f;
+  --accent-dark: #244a24;
+  --accent-warm: #c9762f;
+  --accent-warm-dark: #a35d1e;
+  --gold: #dda426;
+  --border: #e3d5bb;
+  --card-w: 70px;
+  --card-ratio: 0.62;
   font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
@@ -16,11 +21,13 @@
 body {
   margin: 0;
   background: var(--bg);
+  background-image: radial-gradient(circle at 20% 10%, #ffffff55 0, transparent 45%),
+    radial-gradient(circle at 85% 90%, #ffffff40 0, transparent 40%);
   color: var(--ink);
 }
 
 .app {
-  max-width: 1100px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 1.5rem;
 }
@@ -31,13 +38,18 @@ button {
   border: 1px solid var(--accent);
   background: var(--accent);
   color: white;
-  border-radius: 6px;
-  padding: 0.4rem 0.8rem;
+  border-radius: 8px;
+  padding: 0.45rem 0.9rem;
   font-size: 0.9rem;
+  transition: background 0.15s ease, transform 0.1s ease;
 }
 
 button:hover:not(:disabled) {
   background: var(--accent-dark);
+}
+
+button:active:not(:disabled) {
+  transform: translateY(1px);
 }
 
 button:disabled {
@@ -128,19 +140,28 @@ select {
 }
 
 /* --- Game board --- */
+.game-board {
+  background: linear-gradient(180deg, #e9dcc0 0%, #efe4cc 100%);
+  border-radius: 16px;
+  padding: 1rem;
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
 .game-header {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 1rem;
-  justify-content: space-between;
+  justify-content: flex-start;
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: 10px;
-  padding: 0.75rem 1rem;
+  padding: 0.6rem 1rem;
   margin-bottom: 1rem;
 }
 .turn-indicator {
   font-weight: 600;
+  margin-left: auto;
 }
 
 .players-grid {
@@ -153,21 +174,22 @@ select {
 .player-board {
   background: var(--panel);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: 12px;
   padding: 0.75rem;
+  box-shadow: 0 1px 3px rgba(43, 33, 24, 0.08);
 }
 .player-board.current-turn {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 2px var(--accent);
+  border-color: var(--accent-warm);
+  box-shadow: 0 0 0 2px var(--accent-warm), 0 2px 8px rgba(201, 118, 47, 0.25);
 }
 .player-board.self {
-  background: #f1f8e9;
+  background: #f4f8ec;
 }
 .player-board-header {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.6rem;
 }
 .player-board-header h3 {
   margin: 0;
@@ -176,70 +198,194 @@ select {
 }
 .bees {
   font-weight: 600;
+  color: var(--accent-warm-dark);
 }
 
 .plots {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
   gap: 0.5rem;
 }
 .plot {
   border: 1px dashed var(--border);
-  border-radius: 6px;
+  border-radius: 8px;
   padding: 0.4rem;
+  background: #00000005;
+  flex: 1;
+  min-width: 110px;
 }
 .plot.empty {
-  opacity: 0.6;
+  opacity: 0.7;
 }
 .plot-header {
   display: flex;
   justify-content: space-between;
-  font-size: 0.8rem;
-  margin-bottom: 0.25rem;
+  font-size: 0.75rem;
+  margin-bottom: 0.3rem;
+  color: var(--muted);
 }
 .plot-cards {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.25rem;
+  gap: 0.3rem;
+  min-height: calc(var(--card-w) / var(--card-ratio) * 0.55);
+}
+.plot-empty-slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: calc(var(--card-w) / var(--card-ratio) * 0.55);
+  border: 1px dashed var(--border);
+  border-radius: 6px;
 }
 .target-button {
   margin-top: 0.4rem;
   width: 100%;
 }
 
+.player-board-hand {
+  margin-top: 0.6rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border);
+}
+
 /* --- Cards --- */
 .hand {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem;
+  gap: 0.5rem;
   margin: 0.5rem 0;
 }
+
 .card-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  border: 2px solid #999;
-  border-radius: 999px;
-  padding: 0.25rem 0.6rem;
-  background: white;
-  font-size: 0.8rem;
-  color: var(--ink);
+  position: relative;
+  display: block;
+  width: var(--card-w);
+  aspect-ratio: var(--card-ratio);
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(43, 33, 24, 0.25);
+  transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
+}
+.card-badge img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.card-badge:not(.static):hover:not(:disabled) {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 10px rgba(43, 33, 24, 0.3);
 }
 .card-badge.static {
   cursor: default;
 }
 .card-badge.selected {
-  background: #fff59d;
-  border-style: solid;
-}
-.card-badge .dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  display: inline-block;
+  border-color: var(--gold);
+  transform: translateY(-6px);
+  box-shadow: 0 4px 12px rgba(221, 164, 38, 0.5);
 }
 .card-badge .count {
+  position: absolute;
+  bottom: 3px;
+  right: 3px;
+  background: var(--ink);
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  line-height: 1;
+  padding: 0.2rem 0.35rem;
+  border-radius: 999px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+/* Reverso de carta (mano oculta, mazo) */
+.card-back {
+  width: var(--card-w);
+  aspect-ratio: var(--card-ratio);
+  border-radius: 8px;
+  background: repeating-linear-gradient(45deg, var(--accent) 0 8px, var(--accent-dark) 8px 16px);
+  border: 2px solid #fffbf4;
+  box-shadow: 0 1px 4px rgba(43, 33, 24, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+.card-back::after {
+  content: "🐝";
+  font-size: calc(var(--card-w) * 0.32);
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.35));
+}
+.card-back.small {
+  width: calc(var(--card-w) * 0.62);
+}
+
+.hidden-hand {
+  display: flex;
+  align-items: center;
+}
+.hidden-hand .card-back {
+  margin-left: -22px;
+}
+.hidden-hand .card-back:first-child {
+  margin-left: 0;
+}
+.hidden-hand-extra {
+  margin-left: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--muted);
   font-weight: 600;
+}
+
+/* Pilas (mazo / compost) */
+.card-pile {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.card-pile-stack {
+  position: relative;
+  width: calc(var(--card-w) * 0.62);
+  aspect-ratio: var(--card-ratio);
+}
+.card-pile-stack .card-back {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+.card-pile-stack .card-back:first-child {
+  transform: rotate(-6deg);
+}
+.card-pile-stack .card-back:last-child {
+  transform: rotate(4deg);
+}
+.card-pile-stack.compost .card-back {
+  background: repeating-linear-gradient(45deg, #8a6a4a 0 8px, #6b4f34 8px 16px);
+}
+.card-pile-info {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+.card-pile-info strong {
+  font-size: 1.05rem;
+}
+.card-pile-details {
+  cursor: pointer;
+}
+.card-pile-details summary {
+  list-style: none;
+}
+.card-pile-details summary::-webkit-details-marker {
+  display: none;
+}
+.card-pile-details[open] summary .card-pile {
+  margin-bottom: 0.4rem;
 }
 
 /* --- Your area --- */

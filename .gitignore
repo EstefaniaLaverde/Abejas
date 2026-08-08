@@ -1,3 +1,9 @@
 node_modules/
 dist/
 *.log
+.DS_Store
+
+# Carpeta de fotos originales de las cartas (sin optimizar, ~20 MB). La
+# versión que usa la app (redimensionada, comprimida) vive en
+# abejas-web/public/cards/ y sí se commitea.
+/card-images/

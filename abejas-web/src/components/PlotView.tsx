@@ -28,7 +28,7 @@ export default function PlotView({ plot, index, onHarvest, onSelectTarget, targe
 
       <div className="plot-cards">
         {isEmpty ? (
-          <span className="muted">vacía</span>
+          <span className="plot-empty-slot muted">vacía</span>
         ) : (
           groups.map((g) => <CardBadge key={g.typeId} typeId={g.typeId} count={g.count} />)
         )}

@@ -25,6 +25,11 @@ export function cardTypeColor(typeId: string): string {
   return COLORS[typeId] ?? "#999999";
 }
 
+/** Ruta a la ilustración de la carta (servida desde /public/cards). */
+export function cardImageUrl(typeId: string): string {
+  return `/cards/${typeId}.jpg`;
+}
+
 /** Todos los tipos, en el mismo orden que la tabla de referencia del juego. */
 export const ALL_CARD_TYPE_IDS = CARD_TYPES.map((t) => t.id);
 

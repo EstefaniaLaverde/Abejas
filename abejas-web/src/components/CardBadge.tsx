@@ -1,4 +1,4 @@
-import { cardTypeColor, cardTypeName } from "../cardDisplay";
+import { cardImageUrl, cardTypeName } from "../cardDisplay";
 
 interface Props {
   typeId: string;
@@ -9,17 +9,16 @@ interface Props {
 }
 
 export default function CardBadge({ typeId, count, selected, onClick, title }: Props) {
+  const name = cardTypeName(typeId);
   return (
     <button
       type="button"
       className={"card-badge" + (selected ? " selected" : "") + (onClick ? "" : " static")}
-      style={{ borderColor: cardTypeColor(typeId), background: onClick ? undefined : `${cardTypeColor(typeId)}22` }}
       onClick={onClick}
       disabled={!onClick}
-      title={title}
+      title={title ?? name}
     >
-      <span className="dot" style={{ background: cardTypeColor(typeId) }} />
-      {cardTypeName(typeId)}
+      <img src={cardImageUrl(typeId)} alt={name} loading="lazy" />
       {typeof count === "number" && <span className="count">×{count}</span>}
     </button>
   );

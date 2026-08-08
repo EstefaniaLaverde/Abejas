@@ -1,4 +1,5 @@
 import type { AbejasStateJSON, GamePhase } from "../types";
+import { groupByType } from "../cardDisplay";
 import PlayerBoard from "./PlayerBoard";
 import HandView from "./HandView";
 import SowPanel from "./SowPanel";
@@ -6,6 +7,7 @@ import TradePanel from "./TradePanel";
 import PendingPlantsPanel from "./PendingPlantsPanel";
 import ActivityLog from "./ActivityLog";
 import CardBadge from "./CardBadge";
+import CardPile from "./CardPile";
 import BeeConversionTable from "./BeeConversionTable";
 
 interface Props {
@@ -46,13 +48,32 @@ export default function GameBoard({ snapshot, sessionId, send }: Props) {
   const canEndFinalRound =
     snapshot.tradeOffers.every((o) => o.status !== "pendiente") && snapshot.pendingMandatoryPlants.length === 0;
 
+  const compostGroups = groupByType(snapshot.compost);
+
   return (
     <div className="game-board">
       <header className="game-header">
-        <span>
-          Mazo: {snapshot.deckCount} cartas ({snapshot.deckRound === "principal" ? "ronda principal" : "segunda ronda (compost)"})
-        </span>
-        <span>Compost: {snapshot.compost.length} cartas</span>
+        <CardPile
+          count={snapshot.deckCount}
+          label={snapshot.deckRound === "principal" ? "mazo (ronda principal)" : "mazo (2ª ronda, compost)"}
+          variant="deck"
+        />
+        <CardPile
+          count={snapshot.compost.length}
+          label="compost"
+          variant="compost"
+          detail={
+            compostGroups.length === 0 ? (
+              <p className="muted">Vacío por ahora.</p>
+            ) : (
+              <div className="hand">
+                {compostGroups.map((g) => (
+                  <CardBadge key={g.typeId} typeId={g.typeId} count={g.count} />
+                ))}
+              </div>
+            )
+          }
+        />
         <span className="turn-indicator">
           {isFinalRound ? "Ronda final de trueques" : (
             <>

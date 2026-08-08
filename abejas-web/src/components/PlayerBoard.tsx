@@ -1,5 +1,6 @@
 import type { PlayerJSON } from "../types";
 import PlotView from "./PlotView";
+import HiddenHand from "./HiddenHand";
 
 interface Props {
   player: PlayerJSON;
@@ -37,6 +38,12 @@ export default function PlayerBoard({ player, isCurrentTurn, isSelf, onHarvest, 
           />
         ))}
       </div>
+
+      {!isSelf && (
+        <div className="player-board-hand">
+          <HiddenHand count={player.handCount} />
+        </div>
+      )}
     </div>
   );
 }
