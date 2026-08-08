@@ -46,15 +46,18 @@ export default function ConnectScreen({ connecting, connectError, onConnect }: P
           />
         </label>
 
-        <label>
-          Servidor
-          <input value={serverUrl} onChange={(e) => setServerUrl(e.target.value)} placeholder="http://localhost:2567" />
-        </label>
-
         <button type="submit" disabled={connecting || !name.trim()}>
           {connecting ? "Conectando…" : "Crear o unirse a una partida"}
         </button>
       </form>
+
+      <details className="advanced-options">
+        <summary>Opciones avanzadas</summary>
+        <label>
+          Servidor
+          <input value={serverUrl} onChange={(e) => setServerUrl(e.target.value)} placeholder="http://localhost:2567" />
+        </label>
+      </details>
 
       <details className="join-by-id">
         <summary>¿Un amigo ya creó la sala? Únete con el código</summary>
