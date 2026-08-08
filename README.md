@@ -48,6 +48,79 @@ El servidor (`abejas-server`) se despliega en una VM gratis para siempre del ["A
 
 Nota: esta ruta requiere más pasos manuales que un Railway/Vercel típico porque es una VM real, no una plataforma administrada. A cambio, no depende de que una startup mantenga su nivel gratis (ver la sección de Koyeb más abajo — cerró el registro de cuentas nuevas en 2026).
 
+<details>
+<summary><strong>Alternativa: usar tu propia Raspberry Pi en vez de Oracle Cloud</strong></summary>
+
+Si tienes una Raspberry Pi en casa, es una alternativa mejor que cualquier "nivel gratis" de la nube: es tuya, no depende de que una empresa cambie sus términos (como pasó con Koyeb y con los límites de Oracle Always Free), y el consumo eléctrico es mínimo. Reemplaza los pasos 1-4 de abajo por estos:
+
+**1. Preparar la tarjeta SD**
+
+Con el [Raspberry Pi Imager](https://www.raspberrypi.com/software/) en tu Mac: elige **Raspberry Pi OS Lite (64-bit)** (no hace falta el escritorio, es un servidor headless). Antes de escribir la tarjeta, click en el ícono de engranaje (⚙️) para configurar de una vez: habilitar SSH, usuario/contraseña, y tu WiFi si no vas a conectarla por cable. Escribe la tarjeta, métela en la Pi, y préndela.
+
+**2. Conectarte por SSH**
+
+Busca la IP de la Pi en tu red (desde el router, o con `ping raspberrypi.local` si le dejaste ese nombre) y conéctate:
+
+```bash
+ssh tu-usuario@IP-DE-LA-PI
+```
+
+**3. Instalar lo necesario**
+
+```bash
+sudo apt update && sudo apt upgrade -y
+sudo apt install -y build-essential python3 git
+
+# Node.js 22 LTS (mismo comando que en la VM de Oracle, también sirve en ARM)
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+sudo apt install -y nodejs
+
+sudo npm install -g pm2
+```
+
+**4. Descargar, compilar y correr el servidor**
+
+```bash
+git clone https://github.com/TU-USUARIO/Abejas.git
+cd Abejas
+npm install
+npm run build -w abejas-game
+npm run build -w abejas-server
+```
+
+Edita `abejas-server/ecosystem.config.cjs` (`nano abejas-server/ecosystem.config.cjs`) y reemplaza `ALLOWED_ORIGINS` por la URL real de tu app en Vercel (puedes dejarlo con un valor de ejemplo por ahora y editarlo después, una vez tengas esa URL — solo hay que correr `pm2 restart abejas-server` cuando lo cambies).
+
+```bash
+cd abejas-server
+pm2 start ecosystem.config.cjs
+pm2 save
+pm2 startup   # sigue la instrucción que imprime, para que arranque solo si la Pi se reinicia
+```
+
+**5. Exponerlo a internet con Cloudflare Tunnel (sin abrir puertos en tu router)**
+
+En vez de nginx + certbot + IP pública fija (que en una casa normalmente no tienes), usamos [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/): un programita que "llama" hacia Cloudflare desde adentro de tu red, sin necesidad de configurar el router, y Cloudflare se encarga del HTTPS.
+
+```bash
+# Instalar cloudflared (build para ARM)
+curl -L --output cloudflared.deb https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-arm64.deb
+sudo dpkg -i cloudflared.deb
+
+# Túnel rápido: da una URL pública al instante, sin cuenta ni dominio
+pm2 start cloudflared --name abejas-tunnel -- tunnel --url http://localhost:2567
+pm2 save
+```
+
+Mira la URL que te dio en `pm2 logs abejas-tunnel` (algo como `https://palabras-random.trycloudflare.com`). Esa es la URL de tu servidor — pégala en `VITE_ABEJAS_SERVER_URL` en Vercel, o compártela directamente con tus amigos para que la pongan en "Opciones avanzadas" al conectarse.
+
+Ojo: como el túnel no tiene cuenta ni dominio propio, la URL cambia si el proceso se reinicia (por ejemplo si la Pi se reinicia). Mientras la Pi y pm2 sigan corriendo sin interrupciones, la URL se mantiene igual. Si en algún momento cambia, revisa `pm2 logs abejas-tunnel` para ver la nueva y actualízala en Vercel.
+
+Si prefieres una URL que nunca cambie, existe la opción de un "túnel con nombre" comprando un dominio bien barato (~$10-15/año) y conectándolo a una cuenta gratuita de Cloudflare — pregúntame si quieres esa variante.
+
+Después de esto, sigue directo con el paso 5 de abajo ("Interfaz web en Vercel"), usando tu URL de `trycloudflare.com` en vez de la de sslip.io.
+
+</details>
+
 ### 1. Crear la VM en Oracle Cloud
 
 1. Crea una cuenta en [Oracle Cloud](https://www.oracle.com/cloud/free/) (pide verificación de identidad y a veces tarjeta, pero los recursos "Always Free" no cobran).
