@@ -147,28 +147,93 @@ select {
   box-shadow: inset 0 0 0 1px var(--border);
 }
 
-.game-header {
-  display: flex;
-  flex-wrap: wrap;
+/*
+ * Mesa circular: el mazo y el compost quedan al centro (fieltro verde) y las
+ * parcelas de cada jugador se reparten alrededor, como en una mesa física.
+ * Es una cuadrícula de 3x3 con áreas nombradas; qué asientos se usan depende
+ * de cuántos jugadores hay (ver SEATS_BY_COUNT en GameBoard.tsx).
+ */
+.table-ring {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(240px, 1.3fr) minmax(0, 1fr);
+  grid-template-rows: auto auto auto;
+  grid-template-areas:
+    "tl top tr"
+    "left center right"
+    "bl bottom br";
+  gap: 0.75rem;
   align-items: center;
-  gap: 1rem;
-  justify-content: flex-start;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 0.6rem 1rem;
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
+}
+.table-center {
+  grid-area: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  background: radial-gradient(ellipse at center, #4c7a4c 0%, var(--accent-dark) 100%);
+  border-radius: 50% / 40%;
+  padding: 1.5rem 1rem;
+  box-shadow: inset 0 0 0 4px #3a5f3a, 0 3px 10px rgba(0, 0, 0, 0.25);
+  min-height: 160px;
+  justify-content: center;
+}
+.table-piles {
+  display: flex;
+  gap: 1.5rem;
+}
+.table-center .card-pile-info,
+.table-center .turn-indicator {
+  color: #fff;
+}
+.table-center .card-pile-info .muted {
+  color: #dfe9dc;
 }
 .turn-indicator {
   font-weight: 600;
-  margin-left: auto;
+  text-align: center;
 }
 
-.players-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+.table-seat.seat-tl {
+  grid-area: tl;
+}
+.table-seat.seat-top {
+  grid-area: top;
+}
+.table-seat.seat-tr {
+  grid-area: tr;
+}
+.table-seat.seat-left {
+  grid-area: left;
+}
+.table-seat.seat-right {
+  grid-area: right;
+}
+.table-seat.seat-bl {
+  grid-area: bl;
+}
+.table-seat.seat-bottom {
+  grid-area: bottom;
+}
+.table-seat.seat-br {
+  grid-area: br;
+}
+.table-seat .player-board {
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+/* Pantallas angostas: se pierde el acomodo circular y todo se apila en una
+   columna (mazo/compost primero, luego mi tablero, luego los demás). */
+@media (max-width: 860px) {
+  .table-ring {
+    display: flex;
+    flex-direction: column;
+  }
+  .table-center {
+    border-radius: 16px;
+    order: -1;
+  }
 }
 
 .player-board {
@@ -308,18 +373,16 @@ select {
   width: var(--card-w);
   aspect-ratio: var(--card-ratio);
   border-radius: 8px;
-  background: repeating-linear-gradient(45deg, var(--accent) 0 8px, var(--accent-dark) 8px 16px);
+  overflow: hidden;
   border: 2px solid #fffbf4;
   box-shadow: 0 1px 4px rgba(43, 33, 24, 0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
   position: relative;
 }
-.card-back::after {
-  content: "🐝";
-  font-size: calc(var(--card-w) * 0.32);
-  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.35));
+.card-back img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 .card-back.small {
   width: calc(var(--card-w) * 0.62);
@@ -364,8 +427,21 @@ select {
 .card-pile-stack .card-back:last-child {
   transform: rotate(4deg);
 }
-.card-pile-stack.compost .card-back {
-  background: repeating-linear-gradient(45deg, #8a6a4a 0 8px, #6b4f34 8px 16px);
+.card-pile-stack.compost .card-back img {
+  filter: sepia(0.5) saturate(0.7) brightness(0.85);
+}
+/* Última carta del compost, boca arriba encima de la pila (como en la mesa física). */
+.card-pile-top-card {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 2px solid #fffbf4;
+  box-shadow: 0 1px 4px rgba(43, 33, 24, 0.3);
+  transform: rotate(4deg);
 }
 .card-pile-info {
   display: flex;
@@ -374,18 +450,6 @@ select {
 }
 .card-pile-info strong {
   font-size: 1.05rem;
-}
-.card-pile-details {
-  cursor: pointer;
-}
-.card-pile-details summary {
-  list-style: none;
-}
-.card-pile-details summary::-webkit-details-marker {
-  display: none;
-}
-.card-pile-details[open] summary .card-pile {
-  margin-bottom: 0.4rem;
 }
 
 /* --- Your area --- */
@@ -478,36 +542,65 @@ select {
   gap: 0.4rem;
 }
 
-/* --- Tabla de conversión de abejas --- */
-.bee-conversion-table {
+/* --- Zoom de carta (lupa) --- */
+.card-badge-wrap {
+  position: relative;
+  display: inline-block;
+}
+.card-zoom-trigger {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 1.15rem;
+  height: 1.15rem;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--ink);
+  color: #fff;
+  font-size: 0.6rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  opacity: 0.85;
+}
+.card-zoom-trigger:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}
+.card-zoom-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 15, 10, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 2rem;
+}
+.card-zoom-content {
+  position: relative;
+  max-width: min(90vw, 420px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+.card-zoom-content img {
+  width: 100%;
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+}
+.card-zoom-close {
   background: var(--panel);
   border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 0.6rem 1rem;
-  margin-bottom: 1rem;
-  font-size: 0.85rem;
-}
-.bee-conversion-table summary {
+  border-radius: 999px;
+  padding: 0.35rem 0.9rem;
   cursor: pointer;
   font-weight: 600;
-}
-.bee-conversion-table table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 0.6rem;
-}
-.bee-conversion-table th,
-.bee-conversion-table td {
-  text-align: left;
-  padding: 0.3rem 0.5rem;
-  border-bottom: 1px solid var(--border);
-}
-.bee-conversion-table .type-swatch {
-  display: inline-block;
-  width: 0.7rem;
-  height: 0.7rem;
-  border-radius: 50%;
-  margin-right: 0.4rem;
 }
 
 /* --- Activity log --- */

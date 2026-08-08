@@ -13,8 +13,14 @@ export class AbejasState extends Schema {
   @type("number") deckCount = 0;
   @type("string") deckRound: "principal" | "compost" = "principal";
 
-  /** El compost es público: cualquiera puede ver qué se ha perdido. */
-  @type([CardSchema]) compost = new ArraySchema<CardSchema>();
+  /**
+   * El compost no revela su contenido completo (nadie debe poder ver
+   * exactamente qué cartas se han perdido) — solo el conteo y, como en la
+   * pila física, el tipo de la última carta descartada (boca arriba encima
+   * de la pila). "" cuando el compost está vacío.
+   */
+  @type("number") compostCount = 0;
+  @type("string") compostTopTypeId = "";
 
   @type("boolean") awaitingOptionalSow = false;
 

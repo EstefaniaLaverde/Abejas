@@ -1,5 +1,4 @@
 import type { AbejasStateJSON, GamePhase } from "../types";
-import { groupByType } from "../cardDisplay";
 import PlayerBoard from "./PlayerBoard";
 import HandView from "./HandView";
 import SowPanel from "./SowPanel";
@@ -8,7 +7,6 @@ import PendingPlantsPanel from "./PendingPlantsPanel";
 import ActivityLog from "./ActivityLog";
 import CardBadge from "./CardBadge";
 import CardPile from "./CardPile";
-import BeeConversionTable from "./BeeConversionTable";
 
 interface Props {
   snapshot: AbejasStateJSON;
@@ -31,6 +29,21 @@ function phaseLabel(phase: GamePhase): string {
   }
 }
 
+/**
+ * Distribución de asientos alrededor de la mesa (mazo/compost al centro),
+ * como en la mesa física. El primer asiento de cada lista es siempre el
+ * "propio" (abajo, más cerca de quien juega); el resto se reparte alrededor
+ * en el mismo orden de turno, en sentido horario. Solo hay plantillas de 2 a
+ * 6 asientos porque esos son los límites de jugadores del juego.
+ */
+const SEATS_BY_COUNT: Record<number, string[]> = {
+  2: ["bottom", "top"],
+  3: ["bottom", "tl", "tr"],
+  4: ["bottom", "left", "top", "right"],
+  5: ["bottom", "left", "tl", "tr", "right"],
+  6: ["bottom", "bl", "left", "top", "right", "br"],
+};
+
 export default function GameBoard({ snapshot, sessionId, send }: Props) {
   const me = snapshot.players.find((p) => p.sessionId === sessionId);
   if (!me) return <p className="muted">Cargando partida…</p>;
@@ -48,53 +61,54 @@ export default function GameBoard({ snapshot, sessionId, send }: Props) {
   const canEndFinalRound =
     snapshot.tradeOffers.every((o) => o.status !== "pendiente") && snapshot.pendingMandatoryPlants.length === 0;
 
-  const compostGroups = groupByType(snapshot.compost);
+  // Rota la lista de jugadores para que "yo" quede primero (asiento de
+  // abajo); el resto sigue en el mismo orden de turno (que es el orden en
+  // que se sientan alrededor de la mesa).
+  const seatedPlayers = [...snapshot.players.slice(myIndex), ...snapshot.players.slice(0, myIndex)];
+  const seatAreas = SEATS_BY_COUNT[seatedPlayers.length] ?? SEATS_BY_COUNT[6]!;
 
   return (
     <div className="game-board">
-      <header className="game-header">
-        <CardPile
-          count={snapshot.deckCount}
-          label={snapshot.deckRound === "principal" ? "mazo (ronda principal)" : "mazo (2ª ronda, compost)"}
-          variant="deck"
-        />
-        <CardPile
-          count={snapshot.compost.length}
-          label="compost"
-          variant="compost"
-          detail={
-            compostGroups.length === 0 ? (
-              <p className="muted">Vacío por ahora.</p>
+      <div className="table-ring">
+        <div className="table-center">
+          <div className="table-piles">
+            <CardPile
+              count={snapshot.deckCount}
+              label={snapshot.deckRound === "principal" ? "mazo (ronda principal)" : "mazo (2ª ronda, compost)"}
+              variant="deck"
+            />
+            <CardPile
+              count={snapshot.compostCount}
+              label="compost"
+              variant="compost"
+              topCardTypeId={snapshot.compostTopTypeId || undefined}
+            />
+          </div>
+          <span className="turn-indicator">
+            {isFinalRound ? (
+              "Ronda final de trueques"
             ) : (
-              <div className="hand">
-                {compostGroups.map((g) => (
-                  <CardBadge key={g.typeId} typeId={g.typeId} count={g.count} />
-                ))}
-              </div>
-            )
-          }
-        />
-        <span className="turn-indicator">
-          {isFinalRound ? "Ronda final de trueques" : (
-            <>
-              Turno de <strong>{currentPlayer?.name}</strong> — {phaseLabel(snapshot.phase)}
-            </>
-          )}
-        </span>
-      </header>
+              <>
+                Turno de <strong>{currentPlayer?.name}</strong> — {phaseLabel(snapshot.phase)}
+              </>
+            )}
+          </span>
+        </div>
 
-      <BeeConversionTable />
-
-      <div className="players-grid">
-        {snapshot.players.map((p, i) => (
-          <PlayerBoard
-            key={p.sessionId}
-            player={p}
-            isCurrentTurn={i === snapshot.currentPlayerIndex && !isFinalRound}
-            isSelf={p.sessionId === sessionId}
-            onHarvest={(plotIndex) => send("harvest", { plotIndex })}
-          />
-        ))}
+        {seatedPlayers.map((p, i) => {
+          const originalIndex = snapshot.players.findIndex((pl) => pl.sessionId === p.sessionId);
+          const area = seatAreas[i] ?? "bottom";
+          return (
+            <div key={p.sessionId} className={`table-seat seat-${area}`}>
+              <PlayerBoard
+                player={p}
+                isCurrentTurn={originalIndex === snapshot.currentPlayerIndex && !isFinalRound}
+                isSelf={p.sessionId === sessionId}
+                onHarvest={(plotIndex) => send("harvest", { plotIndex })}
+              />
+            </div>
+          );
+        })}
       </div>
 
       <section className="your-area">

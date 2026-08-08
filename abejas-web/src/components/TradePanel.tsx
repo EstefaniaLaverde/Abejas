@@ -31,10 +31,12 @@ export default function TradePanel({
   const [draftCount, setDraftCount] = useState(1);
 
   const otherPlayers = players.filter((p) => p.playerId !== me.playerId);
-  const [isGift, setIsGift] = useState(false);
-  const [giftToPlayerId, setGiftToPlayerId] = useState(otherPlayers[0]?.playerId ?? "");
+  /** "" = oferta abierta (cualquiera puede aceptarla); si no, es el id de un jugador específico. */
+  const [toPlayerId, setToPlayerId] = useState("");
 
   const offerableCards = [...(me.hand ?? []), ...drawnCards];
+  const isTargeted = Boolean(toPlayerId);
+  const isPureGift = isTargeted && requestedCards.length === 0;
 
   function toggleSelect(cardId: string) {
     setSelectedIds((prev) => (prev.includes(cardId) ? prev.filter((id) => id !== cardId) : [...prev, cardId]));
@@ -52,15 +54,17 @@ export default function TradePanel({
     setRequestedCards((prev) => prev.filter((r) => r.typeId !== typeId));
   }
 
-  const canSubmit = selectedIds.length > 0 && (isGift ? Boolean(giftToPlayerId) : requestedCards.length > 0);
+  // Una oferta abierta (sin destinatario) siempre debe pedir algo a cambio;
+  // una oferta dirigida a un jugador puede ir vacía (regalo puro) o pedir algo.
+  const canSubmit = selectedIds.length > 0 && (isTargeted || requestedCards.length > 0);
 
   function proposeTrade(e: React.FormEvent) {
     e.preventDefault();
     if (!canSubmit) return;
     send(proposeMessageType, {
       offeredCardIds: selectedIds,
-      requestedCards: isGift ? [] : requestedCards,
-      ...(isGift ? { toPlayerId: giftToPlayerId } : {}),
+      requestedCards,
+      ...(isTargeted ? { toPlayerId } : {}),
     });
     setSelectedIds([]);
     setRequestedCards([]);
@@ -96,70 +100,70 @@ export default function TradePanel({
           <p className="muted">Elige las cartas que ofreces:</p>
           <HandView hand={offerableCards} selectable selectedIds={selectedIds} onToggleSelect={toggleSelect} />
 
-          <label className="gift-toggle">
-            <input type="checkbox" checked={isGift} onChange={(e) => setIsGift(e.target.checked)} />
-            Regalar (no pedir nada a cambio)
-          </label>
+          <div className="propose-trade-row">
+            <label>
+              Ofrecer a
+              <select value={toPlayerId} onChange={(e) => setToPlayerId(e.target.value)}>
+                <option value="">Cualquiera (oferta abierta)</option>
+                {otherPlayers.map((p) => (
+                  <option key={p.playerId} value={p.playerId}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
 
-          {isGift ? (
-            <div className="propose-trade-row">
-              <label>
-                A
-                <select value={giftToPlayerId} onChange={(e) => setGiftToPlayerId(e.target.value)}>
-                  {otherPlayers.map((p) => (
-                    <option key={p.playerId} value={p.playerId}>
-                      {p.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
-          ) : (
-            <>
-              <p className="muted">A cambio de (se pueden pedir varios tipos distintos):</p>
-              <div className="propose-trade-row">
-                <label>
-                  Tipo
-                  <select value={draftTypeId} onChange={(e) => setDraftTypeId(e.target.value)}>
-                    {ALL_CARD_TYPE_IDS.map((id) => (
-                      <option key={id} value={id}>
-                        {cardTypeName(id)}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  Cantidad
-                  <input
-                    type="number"
-                    min={1}
-                    max={12}
-                    value={draftCount}
-                    onChange={(e) => setDraftCount(Number(e.target.value))}
-                  />
-                </label>
-                <button type="button" onClick={addRequestedType}>
-                  Agregar
-                </button>
-              </div>
+          <p className="muted">
+            {isTargeted
+              ? "A cambio de (opcional: déjalo vacío para regalarla directamente):"
+              : "A cambio de (se pueden pedir varios tipos distintos):"}
+          </p>
+          <div className="propose-trade-row">
+            <label>
+              Tipo
+              <select value={draftTypeId} onChange={(e) => setDraftTypeId(e.target.value)}>
+                {ALL_CARD_TYPE_IDS.map((id) => (
+                  <option key={id} value={id}>
+                    {cardTypeName(id)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Cantidad
+              <input
+                type="number"
+                min={1}
+                max={12}
+                value={draftCount}
+                onChange={(e) => setDraftCount(Number(e.target.value))}
+              />
+            </label>
+            <button type="button" onClick={addRequestedType}>
+              Agregar
+            </button>
+          </div>
 
-              {requestedCards.length > 0 && (
-                <ul className="requested-cards-list">
-                  {requestedCards.map((r) => (
-                    <li key={r.typeId}>
-                      {r.count}× {cardTypeName(r.typeId)}{" "}
-                      <button type="button" onClick={() => removeRequestedType(r.typeId)}>
-                        Quitar
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </>
+          {requestedCards.length > 0 && (
+            <ul className="requested-cards-list">
+              {requestedCards.map((r) => (
+                <li key={r.typeId}>
+                  {r.count}× {cardTypeName(r.typeId)}{" "}
+                  <button type="button" onClick={() => removeRequestedType(r.typeId)}>
+                    Quitar
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {!isTargeted && requestedCards.length === 0 && (
+            <p className="muted">Una oferta abierta debe pedir algo a cambio, o elige un jugador para regalarla.</p>
           )}
 
           <button type="submit" disabled={!canSubmit}>
-            {isGift ? "Regalar" : "Proponer trueque"}
+            {isPureGift ? "Regalar" : "Proponer trueque"}
           </button>
         </form>
       )}
@@ -170,7 +174,8 @@ export default function TradePanel({
         <ul>
           {pendingOffers.map((offer) => {
             const isMine = offer.fromPlayerId === me.playerId;
-            const isGiftOffer = Boolean(offer.toPlayerId);
+            const isTargetedOffer = Boolean(offer.toPlayerId);
+            const isPureGiftOffer = isTargetedOffer && offer.requestedCards.length === 0;
             const isTargetingMe = offer.toPlayerId === me.playerId;
             const iHaveEnough = offer.requestedCards.every(
               (r) => (myHandCountByType.get(r.typeId) ?? 0) >= r.count,
@@ -182,10 +187,15 @@ export default function TradePanel({
               <li key={offer.id} className="trade-offer">
                 <span>
                   <strong>{playerName(offer.fromPlayerId)}</strong>{" "}
-                  {isGiftOffer ? (
+                  {isPureGiftOffer ? (
                     <>
                       le regala {offer.offeredCards.map((c) => cardTypeName(c.typeId)).join(", ")} a{" "}
                       <strong>{playerName(offer.toPlayerId)}</strong>
+                    </>
+                  ) : isTargetedOffer ? (
+                    <>
+                      le ofrece {offer.offeredCards.map((c) => cardTypeName(c.typeId)).join(", ")} a{" "}
+                      <strong>{playerName(offer.toPlayerId)}</strong> a cambio de {requestedLabel}
                     </>
                   ) : (
                     <>
@@ -199,7 +209,7 @@ export default function TradePanel({
                     Cancelar
                   </button>
                 )}
-                {!isMine && !isGiftOffer && (
+                {!isMine && !isTargetedOffer && (
                   <button
                     type="button"
                     disabled={!iHaveEnough}
@@ -209,9 +219,14 @@ export default function TradePanel({
                     Aceptar
                   </button>
                 )}
-                {!isMine && isGiftOffer && isTargetingMe && (
+                {!isMine && isTargetedOffer && isTargetingMe && (
                   <span className="gift-actions">
-                    <button type="button" onClick={() => send("acceptTrade", { offerId: offer.id })}>
+                    <button
+                      type="button"
+                      disabled={!iHaveEnough}
+                      title={iHaveEnough ? undefined : "No tienes suficientes cartas de ese tipo"}
+                      onClick={() => send("acceptTrade", { offerId: offer.id })}
+                    >
                       Aceptar
                     </button>
                     <button type="button" onClick={() => send("rejectTrade", { offerId: offer.id })}>

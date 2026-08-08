@@ -68,12 +68,16 @@ export function proposeFinalRoundTrade(
   };
   state.tradeOffers.push(offer);
   const target = toPlayerId ? getPlayer(state, toPlayerId) : null;
-  log(
-    state,
-    target
-      ? `[Ronda final] ${player.name} le regala ${offeredCards.map((o) => o.card.typeId).join(", ")} a ${target.name}.`
-      : `[Ronda final] ${player.name} ofrece ${offeredCards.map((o) => o.card.typeId).join(", ")} a cambio de ${describeRequestedCards(requestedCards)}.`,
-  );
+  const offeredList = offeredCards.map((o) => o.card.typeId).join(", ");
+  let message: string;
+  if (target && requestedCards.length === 0) {
+    message = `[Ronda final] ${player.name} le regala ${offeredList} a ${target.name}.`;
+  } else if (target) {
+    message = `[Ronda final] ${player.name} le ofrece ${offeredList} a ${target.name} a cambio de ${describeRequestedCards(requestedCards)}.`;
+  } else {
+    message = `[Ronda final] ${player.name} ofrece ${offeredList} a cambio de ${describeRequestedCards(requestedCards)}.`;
+  }
+  log(state, message);
   return offer;
 }
 

@@ -64,7 +64,9 @@ export interface AbejasStateJSON {
   phase: GamePhase;
   deckCount: number;
   deckRound: "principal" | "compost";
-  compost: CardJSON[];
+  compostCount: number;
+  /** Tipo de la última carta descartada (boca arriba, como en la pila física); "" si está vacío. */
+  compostTopTypeId: string;
   awaitingOptionalSow: boolean;
   pendingTradeDraw: CardJSON[];
   tradeDrawnThisTurn: boolean;

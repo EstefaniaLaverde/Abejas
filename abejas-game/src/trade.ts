@@ -135,12 +135,16 @@ export function proposeTrade(
   };
   state.tradeOffers.push(offer);
   const target = toPlayerId ? getPlayer(state, toPlayerId) : null;
-  log(
-    state,
-    target
-      ? `${player.name} le regala ${offeredCards.map((o) => o.card.typeId).join(", ")} a ${target.name}.`
-      : `${player.name} ofrece ${offeredCards.map((o) => o.card.typeId).join(", ")} a cambio de ${describeRequestedCards(requestedCards)}.`,
-  );
+  const offeredList = offeredCards.map((o) => o.card.typeId).join(", ");
+  let message: string;
+  if (target && requestedCards.length === 0) {
+    message = `${player.name} le regala ${offeredList} a ${target.name}.`;
+  } else if (target) {
+    message = `${player.name} le ofrece ${offeredList} a ${target.name} a cambio de ${describeRequestedCards(requestedCards)}.`;
+  } else {
+    message = `${player.name} ofrece ${offeredList} a cambio de ${describeRequestedCards(requestedCards)}.`;
+  }
+  log(state, message);
   return offer;
 }
 
@@ -216,7 +220,7 @@ export function acceptTrade(
     throw new GameError("El proponente no puede aceptar su propia oferta.");
   }
   if (offer.toPlayerId && offer.toPlayerId !== acceptingPlayerId) {
-    throw new GameError(`Este regalo está dirigido a otro jugador.`);
+    throw new GameError(`Esta oferta está dirigida a otro jugador.`);
   }
   const acceptor = getPlayer(state, acceptingPlayerId);
   const offeror = getPlayer(state, offer.fromPlayerId);

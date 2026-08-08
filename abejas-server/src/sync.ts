@@ -112,7 +112,8 @@ export function syncStateFromEngine(
   schema.finalTradeRoundDone = engineState.finalTradeRoundDone;
   schema.winnerId = engineState.winnerId ?? "";
 
-  syncList(schema.compost, engineState.compost, updateCard);
+  schema.compostCount = engineState.compost.length;
+  schema.compostTopTypeId = engineState.compost.at(-1)?.typeId ?? "";
   syncList(schema.pendingTradeDraw, engineState.pendingTradeDraw, updateCard);
   syncList(schema.tradeOffers, engineState.tradeOffers, updateTradeOffer);
   syncList(schema.pendingMandatoryPlants, engineState.pendingMandatoryPlants, updatePendingPlant);
