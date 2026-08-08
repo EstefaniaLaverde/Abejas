@@ -1,4 +1,5 @@
 import type { PlayerJSON } from "../types";
+import { validPlotIndexesForType } from "../cardDisplay";
 import CardBadge from "./CardBadge";
 
 interface Props {
@@ -16,6 +17,7 @@ export default function SowPanel({ me, awaitingOptionalSow, send }: Props) {
   }
 
   const messageType = awaitingOptionalSow ? "sowOptional" : "sowMandatory";
+  const validIndexes = validPlotIndexesForType(me.plots, card.typeId);
 
   return (
     <div className="sow-panel">
@@ -23,13 +25,21 @@ export default function SowPanel({ me, awaitingOptionalSow, send }: Props) {
         {awaitingOptionalSow ? "Puedes sembrar esta segunda carta (opcional):" : "Debes sembrar esta carta:"}
       </p>
       <CardBadge typeId={card.typeId} />
-      <div className="target-buttons">
-        {me.plots.map((_, i) => (
-          <button key={i} type="button" onClick={() => send(messageType, { plotIndex: i })}>
-            Parcela {i + 1}
-          </button>
-        ))}
-      </div>
+
+      {validIndexes.length > 0 ? (
+        <div className="target-buttons">
+          {validIndexes.map((i) => (
+            <button key={i} type="button" onClick={() => send(messageType, { plotIndex: i })}>
+              Parcela {i + 1}
+            </button>
+          ))}
+        </div>
+      ) : (
+        <p className="warning-text">
+          No tienes una parcela vacía ni con este cultivo. Cosecha alguna parcela primero para poder sembrar.
+        </p>
+      )}
+
       {awaitingOptionalSow && (
         <button type="button" className="link-button" onClick={() => send("skipOptionalSow")}>
           No sembrar esta carta

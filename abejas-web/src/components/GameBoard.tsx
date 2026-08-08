@@ -1,4 +1,5 @@
 import type { AbejasStateJSON, GamePhase } from "../types";
+import { validPlotIndexesForType } from "../cardDisplay";
 import PlayerBoard from "./PlayerBoard";
 import HandView from "./HandView";
 import SowPanel from "./SowPanel";
@@ -131,21 +132,30 @@ export default function GameBoard({ snapshot, sessionId, send }: Props) {
 
             {snapshot.pendingTradeDraw.length > 0 && isMyTurn && (
               <div className="drawn-plant-targets">
-                <p className="muted">Puedes plantar directo las cartas robadas:</p>
-                {snapshot.pendingTradeDraw.map((card) => (
-                  <div key={card.id} className="pending-plant-row">
-                    <CardBadge typeId={card.typeId} />
-                    {me.plots.map((_, i) => (
-                      <button
-                        key={i}
-                        type="button"
-                        onClick={() => send("plantDrawnCard", { cardId: card.id, plotIndex: i })}
-                      >
-                        Parcela {i + 1}
-                      </button>
-                    ))}
-                  </div>
-                ))}
+                <p className="muted">Puedes plantar directo las cartas robadas (o usarlas en un trueque abajo):</p>
+                {snapshot.pendingTradeDraw.map((card) => {
+                  const validIndexes = validPlotIndexesForType(me.plots, card.typeId);
+                  return (
+                    <div key={card.id} className="pending-plant-row">
+                      <CardBadge typeId={card.typeId} />
+                      {validIndexes.length > 0 ? (
+                        validIndexes.map((i) => (
+                          <button
+                            key={i}
+                            type="button"
+                            onClick={() => send("plantDrawnCard", { cardId: card.id, plotIndex: i })}
+                          >
+                            Parcela {i + 1}
+                          </button>
+                        ))
+                      ) : (
+                        <span className="warning-text">
+                          No hay parcela libre para esta carta; cosecha una o úsala en un trueque.
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             )}
 

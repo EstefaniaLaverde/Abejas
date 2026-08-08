@@ -46,3 +46,21 @@ export function groupByType(cards: { typeId: string }[]): { typeId: string; coun
   }
   return Array.from(counts.entries()).map(([typeId, count]) => ({ typeId, count }));
 }
+
+/**
+ * Índices de parcelas donde se puede sembrar `typeId` sin perder cartas:
+ * vacías, o que ya tengan ese mismo cultivo (cada parcela solo admite un
+ * tipo de cultivo a la vez). Espejo en el cliente de la misma regla que
+ * aplica el motor (`validPlotIndexesForType` en abejas-game), para que la
+ * interfaz solo ofrezca botones de siembra en parcelas legales y nunca deje
+ * descartar una parcela llena por accidente.
+ */
+export function validPlotIndexesForType(plots: { cards: { typeId: string }[] }[], typeId: string): number[] {
+  const valid: number[] = [];
+  plots.forEach((plot, index) => {
+    const isEmpty = plot.cards.length === 0;
+    const matchesType = plot.cards[0]?.typeId === typeId;
+    if (isEmpty || matchesType) valid.push(index);
+  });
+  return valid;
+}

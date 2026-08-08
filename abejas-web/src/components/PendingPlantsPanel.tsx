@@ -1,4 +1,5 @@
 import type { PendingMandatoryPlantJSON, PlayerJSON } from "../types";
+import { validPlotIndexesForType } from "../cardDisplay";
 import CardBadge from "./CardBadge";
 
 interface Props {
@@ -15,22 +16,29 @@ export default function PendingPlantsPanel({ me, pendingPlants, send }: Props) {
   return (
     <div className="pending-plants">
       <p>Recibiste estas cartas por trueque — debes sembrarlas ya:</p>
-      {mine.map((pending) => (
-        <div key={pending.card.id} className="pending-plant-row">
-          <CardBadge typeId={pending.card.typeId} />
-          {me.plots.map((_, i) => (
-            <button
-              key={i}
-              type="button"
-              onClick={() =>
-                send("plantMandatoryTradeCard", { cardId: pending.card.id, plotIndex: i })
-              }
-            >
-              Parcela {i + 1}
-            </button>
-          ))}
-        </div>
-      ))}
+      {mine.map((pending) => {
+        const validIndexes = validPlotIndexesForType(me.plots, pending.card.typeId);
+        return (
+          <div key={pending.card.id} className="pending-plant-row">
+            <CardBadge typeId={pending.card.typeId} />
+            {validIndexes.length > 0 ? (
+              validIndexes.map((i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => send("plantMandatoryTradeCard", { cardId: pending.card.id, plotIndex: i })}
+                >
+                  Parcela {i + 1}
+                </button>
+              ))
+            ) : (
+              <p className="warning-text">
+                No tienes una parcela vacía ni con este cultivo. Cosecha alguna parcela primero para poder sembrar.
+              </p>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
