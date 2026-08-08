@@ -10,7 +10,18 @@ Juego de cartas colombiano, online, para jugar con amigos desde el computador.
 
 ## Primeros pasos
 
-Desde la raíz del proyecto:
+La forma más simple: desde la raíz del proyecto, un solo comando levanta todo (instala dependencias si hace falta, compila el motor de reglas, y arranca servidor + web juntos en la misma terminal; `Ctrl+C` detiene ambos):
+
+```bash
+./dev.sh
+# o, equivalente:
+npm run dev
+```
+
+El servidor queda en `http://localhost:2567` (con panel de desarrollo en `/playground`), y la interfaz web en `http://localhost:5173`.
+
+<details>
+<summary>Manualmente, paso a paso (si prefieres dos terminales separadas)</summary>
 
 ```bash
 npm install
@@ -27,7 +38,7 @@ npm run dev:server
 npm run dev:web
 ```
 
-El servidor queda en `http://localhost:2567` (con panel de desarrollo en `/playground`), y la interfaz web en `http://localhost:5173`.
+</details>
 
 Para jugar con amigos en otras computadoras, el servidor tiene que ser accesible desde internet — ver [Despliegue](#despliegue) más abajo. Mientras tanto, para probar en la misma red local, cada amigo puede abrir `http://localhost:5173` en su propia máquina apuntando al servidor de quien lo esté hosteando (cambiando la URL del servidor en la pantalla de conexión).
 
