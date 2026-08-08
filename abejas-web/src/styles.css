@@ -295,6 +295,8 @@ select {
 .plot-cards {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
   gap: 0.3rem;
   min-height: calc(var(--card-w) / var(--card-ratio) * 0.55);
 }
