@@ -1,6 +1,7 @@
 import type { PlayerJSON } from "../types";
 import PlotView from "./PlotView";
 import HiddenHand from "./HiddenHand";
+import { BeeIcon, CardsIcon } from "./icons";
 
 interface Props {
   player: PlayerJSON;
@@ -22,8 +23,12 @@ export default function PlayerBoard({ player, isCurrentTurn, isSelf, onHarvest, 
           {isSelf && " (tú)"}
           {!player.connected && <span className="muted"> — desconectado</span>}
         </h3>
-        <span className="bees">🐝 {player.bees}</span>
-        <span className="muted">✋ {player.handCount}</span>
+        <span className="bees player-stat" title={`${player.bees} abejas`}>
+          <BeeIcon size={14} className="bee-icon" /> {player.bees}
+        </span>
+        <span className="muted player-stat" title={`${player.handCount} cartas en mano`}>
+          <CardsIcon size={13} /> {player.handCount}
+        </span>
       </div>
 
       <div className="plots">

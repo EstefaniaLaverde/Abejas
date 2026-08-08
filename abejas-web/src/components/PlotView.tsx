@@ -1,6 +1,7 @@
 import type { PlotJSON } from "../types";
 import { groupByType } from "../cardDisplay";
 import CardBadge from "./CardBadge";
+import { SproutIcon } from "./icons";
 
 interface Props {
   plot: PlotJSON;
@@ -31,6 +32,7 @@ export default function PlotView({ plot, index, onHarvest, onSelectTarget, targe
 
       {!isEmpty && onHarvest && (
         <button type="button" className="harvest-button" onClick={onHarvest}>
+          <SproutIcon size={13} />
           Cosechar
         </button>
       )}

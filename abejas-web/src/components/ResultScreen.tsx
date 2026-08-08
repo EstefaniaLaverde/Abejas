@@ -1,4 +1,5 @@
 import type { AbejasStateJSON } from "../types";
+import { TrophyIcon } from "./icons";
 
 interface Props {
   snapshot: AbejasStateJSON;
@@ -10,7 +11,10 @@ export default function ResultScreen({ snapshot }: Props) {
 
   return (
     <div className="result-screen">
-      <h2>🏆 ¡Partida terminada!</h2>
+      <h2 className="result-title">
+        <TrophyIcon size={28} />
+        ¡Partida terminada!
+      </h2>
       {winner && (
         <p className="winner-line">
           Gana <strong>{winner.name}</strong> con {winner.bees} abejas

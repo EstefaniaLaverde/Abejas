@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { ConnectOptions } from "../useAbejasRoom";
+import { BeeIcon } from "./icons";
 
 const DEFAULT_SERVER_URL =
   (import.meta.env.VITE_ABEJAS_SERVER_URL as string | undefined) ?? "http://localhost:2567";
@@ -27,7 +28,10 @@ export default function ConnectScreen({ connecting, connectError, onConnect }: P
 
   return (
     <div className="connect-screen">
-      <h1>🐝 Abejas</h1>
+      <h1 className="brand-title">
+        <BeeIcon size={34} className="bee-icon" />
+        Abejas
+      </h1>
       <p className="subtitle">Juega con tus amigos, cada uno desde su computador.</p>
 
       <form className="connect-form" onSubmit={(e) => handleSubmit(e, false)}>

@@ -7,3 +7,6 @@ dist/
 # versión que usa la app (redimensionada, comprimida) vive en
 # abejas-web/public/cards/ y sí se commitea.
 /card-images/
+
+# Skill de diseño (herramienta externa, no es parte del juego).
+/ui-ux-pro-max-skill/

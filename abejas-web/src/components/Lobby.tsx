@@ -1,4 +1,5 @@
 import type { AbejasStateJSON } from "../types";
+import { BeeIcon } from "./icons";
 
 interface Props {
   snapshot: AbejasStateJSON;
@@ -11,7 +12,10 @@ export default function Lobby({ snapshot, roomId, onStartGame }: Props) {
 
   return (
     <div className="lobby">
-      <h2>Sala de espera</h2>
+      <h2 className="brand-title" style={{ fontSize: "1.6rem" }}>
+        <BeeIcon size={24} className="bee-icon" />
+        Sala de espera
+      </h2>
 
       {roomId && (
         <p className="room-code">

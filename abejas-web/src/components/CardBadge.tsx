@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { cardImageUrl, cardTypeName } from "../cardDisplay";
+import { CloseIcon, SearchIcon } from "./icons";
 
 interface Props {
   typeId: string;
@@ -40,7 +41,7 @@ export default function CardBadge({ typeId, count, selected, onClick, title }: P
           setZoomed(true);
         }}
       >
-        🔍
+        <SearchIcon size={11} />
       </button>
 
       {zoomed && (
@@ -48,7 +49,8 @@ export default function CardBadge({ typeId, count, selected, onClick, title }: P
           <div className="card-zoom-content" onClick={(e) => e.stopPropagation()}>
             <img src={cardImageUrl(typeId)} alt={name} />
             <button type="button" className="card-zoom-close" onClick={() => setZoomed(false)}>
-              Cerrar ✕
+              <CloseIcon size={13} />
+              Cerrar
             </button>
           </div>
         </div>
