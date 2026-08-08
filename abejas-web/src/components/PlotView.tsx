@@ -19,11 +19,6 @@ export default function PlotView({ plot, index, onHarvest, onSelectTarget, targe
     <div className={"plot" + (isEmpty ? " empty" : "")}>
       <div className="plot-header">
         <span>Parcela {index + 1}</span>
-        {!isEmpty && onHarvest && (
-          <button type="button" className="link-button" onClick={onHarvest}>
-            Cosechar
-          </button>
-        )}
       </div>
 
       <div className="plot-cards">
@@ -33,6 +28,12 @@ export default function PlotView({ plot, index, onHarvest, onSelectTarget, targe
           groups.map((g) => <CardBadge key={g.typeId} typeId={g.typeId} count={g.count} />)
         )}
       </div>
+
+      {!isEmpty && onHarvest && (
+        <button type="button" className="harvest-button" onClick={onHarvest}>
+          Cosechar
+        </button>
+      )}
 
       {onSelectTarget && (
         <button type="button" className="target-button" onClick={onSelectTarget}>

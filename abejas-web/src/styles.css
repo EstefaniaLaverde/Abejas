@@ -307,6 +307,17 @@ select {
   border: 1px dashed var(--border);
   border-radius: 6px;
 }
+.harvest-button {
+  margin-top: 0.35rem;
+  width: 100%;
+  padding: 0.3rem 0.5rem;
+  font-size: 0.75rem;
+  background: var(--accent-warm);
+  border-color: var(--accent-warm);
+}
+.harvest-button:hover:not(:disabled) {
+  background: var(--accent-warm-dark);
+}
 .target-button {
   margin-top: 0.4rem;
   width: 100%;
