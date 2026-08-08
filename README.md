@@ -139,6 +139,15 @@ Al terminar, tu servidor queda accesible en `https://10-20-30-40.sslip.io` (con 
 Listo: comparte la URL de Vercel con tus amigos para que jueguen, cada quien desde su casa.
 
 <details>
+<summary>Error "No workspaces found: --workspace=abejas-game" en el build de Vercel</summary>
+
+Pasa cuando el **Root Directory** del proyecto en Vercel quedó apuntando a `abejas-web` en vez de la raíz del repo (el asistente de "Add New Project" a veces lo sugiere solo, al detectar el `vite.config` ahí adentro). Con eso, `npm install` y el build corren dentro de `abejas-web/`, que no tiene el `workspaces` del monorepo — de ahí el error.
+
+Arreglo: en el proyecto de Vercel, **Settings → General → Root Directory**, bórralo (o ponlo en `./`) para que quede en la raíz del repo, guarda, y vuelve a desplegar (**Deployments → ⋯ → Redeploy**). El `vercel.json` de la raíz ya trae el `buildCommand`/`installCommand`/`outputDirectory` correctos para el monorepo.
+
+</details>
+
+<details>
 <summary>¿Por qué no Koyeb/Railway/Render?</summary>
 
 Koyeb era la primera opción recomendada, pero cerró el registro de cuentas nuevas gratis en 2026 tras ser comprada por Mistral AI. Railway cobra desde $5/mes para un servicio siempre activo. Render sí es gratis, pero apaga el servicio a los 15 minutos sin tráfico, lo que cortaría partidas en curso y perdería el estado del juego (vive en memoria). Oracle Cloud Always Free es más manual de configurar, pero no se apaga y es una oferta estable de una empresa grande, no de una startup que puede cambiar de plan.
