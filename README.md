@@ -121,6 +121,27 @@ Después de esto, sigue directo con el paso 5 de abajo ("Interfaz web en Vercel"
 
 </details>
 
+<details>
+<summary><strong>Alternativa: modo "bajo demanda" (sin dejar nada prendido)</strong></summary>
+
+Si no quieres tener un servidor corriendo todo el tiempo (ni en una VM ni en la Pi dejada prendida), usa `host.sh`: levanta el servidor y un túnel público de Cloudflare solo mientras estés jugando, y con `Ctrl+C` apaga todo al terminar. Corre en tu Mac o en la Raspberry Pi, donde prefieras tenerlo en el momento.
+
+```bash
+# Una sola vez: instalar cloudflared
+brew install cloudflared   # en Mac; en la Pi ver la sección de arriba
+
+# Antes de la primera vez: edita host.sh y reemplaza ALLOWED_ORIGINS
+# con la URL real de tu app en Vercel.
+
+./host.sh
+```
+
+Te va a imprimir una URL pública (`https://palabras-random.trycloudflare.com`) — ponla en "Opciones avanzadas" al conectarte, o compártela con tus amigos. Cuando terminen de jugar, `Ctrl+C` y listo, nada queda corriendo de fondo.
+
+(La interfaz web sigue siempre desplegada en Vercel — lo único "bajo demanda" es el servidor del juego.)
+
+</details>
+
 ### 1. Crear la VM en Oracle Cloud
 
 1. Crea una cuenta en [Oracle Cloud](https://www.oracle.com/cloud/free/) (pide verificación de identidad y a veces tarjeta, pero los recursos "Always Free" no cobran).
