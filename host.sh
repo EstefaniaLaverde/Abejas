@@ -10,7 +10,7 @@
 #
 # Antes de la primera vez, reemplaza ALLOWED_ORIGINS abajo con la URL real de
 # tu app en Vercel (el CORS del servidor solo deja pasar peticiones desde ahí).
-ALLOWED_ORIGINS="https://abejas-abejas-web-1kwq.vercel.app/"
+ALLOWED_ORIGINS="https://abejas-abejas-web-1kwq.vercel.app"
 
 set -e
 cd "$(dirname "$0")"
